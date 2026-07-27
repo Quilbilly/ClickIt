@@ -59,6 +59,14 @@ EMAIL_FROM="ClickIt <noreply@yourdomain.com>"
 - Guests can skip email and scan a QR on the thank-you screen
 - Admin can “Process queue now”
 
+## Guest downloads after local prune
+
+Captures always land on disk first. When `STORAGE_PROVIDER=s3`, admin can **Prune local** after a successful cloud upload. The guest download page then serves **signed** (or public-base) cloud URLs for preview + download so links keep working after local files are removed.
+
+## Touch keyboard
+
+The booth email step includes an on-screen keyboard for kiosk touchscreens (`inputmode=none` suppresses the OS keyboard).
+
 ## Scripts
 
 | Command | Purpose |
@@ -66,7 +74,7 @@ EMAIL_FROM="ClickIt <noreply@yourdomain.com>"
 | `npm run dev` | API + booth (nodemon) |
 | `npm run sony-bridge` | Dev Sony protocol sidecar |
 | `npm run dev:sony` | Sidecar + server together |
-| `npm run kiosk` | Electron fullscreen booth |
+| `npm run kiosk` | Electron fullscreen booth + health tray |
 
 ## Architecture
 

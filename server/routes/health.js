@@ -17,7 +17,7 @@ router.get("/health", async (_req, res) => {
   res.json({
     ok: true,
     app: "ClickIt",
-    version: "0.2.0",
+    version: "0.3.0",
     camera,
     storage: storageStatus(),
     email: config.emailTransport,

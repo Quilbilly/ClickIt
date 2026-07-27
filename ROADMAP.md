@@ -13,14 +13,14 @@
 - [x] Electron fullscreen kiosk shell
 - [x] Sony sidecar protocol + dev bridge
 - [x] Admin settings / sessions / resend / queue controls
+- [x] Signed cloud download URLs on the guest page when local files are pruned
+- [x] Touch on-screen keyboard
+- [x] Health watchdog tray icon
 
 ## Next
 
 - [ ] Real Sony Camera Remote SDK binary implementing the sidecar protocol
-- [ ] Signed cloud download URLs on the guest page when local files are pruned
-- [ ] Touch on-screen keyboard
 - [ ] Windows/macOS installer + code signing
-- [ ] Health watchdog tray icon
 - [ ] Print path (4×6)
 - [ ] Event branding frames / watermarks
 - [ ] GIF / boomerang from burst

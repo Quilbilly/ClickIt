@@ -1,7 +1,7 @@
 import { Router } from "express";
 import path from "node:path";
 import { getSessionByToken } from "../services/store.js";
-import { getPhotoReadStreamOrPath } from "../services/storage.js";
+import { getPhotoReadStreamOrPath, resolveGuestPhotoLinks } from "../services/storage.js";
 
 const router = Router();
 
@@ -12,14 +12,11 @@ router.get("/download/:token", async (req, res) => {
     return res.status(410).json({ error: "This download link has expired" });
   }
 
+  const photos = await resolveGuestPhotoLinks(session);
   res.json({
     eventPhotos: session.photos?.length || 0,
     expiresAt: session.expiresAt,
-    photos: (session.photos || []).map((p) => ({
-      filename: p.filename,
-      index: p.index,
-      url: `/api/download/${session.token}/photos/${encodeURIComponent(p.filename)}`,
-    })),
+    photos,
   });
 });
 
@@ -31,14 +28,22 @@ router.get("/download/:token/photos/:filename", async (req, res) => {
   }
 
   const safe = path.basename(req.params.filename);
-  const asset = await getPhotoReadStreamOrPath(session, safe);
+  const wantDownload = ["1", "true", "yes"].includes(String(req.query.download || "").toLowerCase());
+  const disposition = wantDownload ? "attachment" : "inline";
+  const asset = await getPhotoReadStreamOrPath(session, safe, { disposition });
   if (!asset) return res.status(404).json({ error: "Photo not found" });
 
   if (asset.kind === "url") {
     return res.redirect(asset.url);
   }
 
-  res.set("Content-Disposition", `attachment; filename="${asset.filename}"`);
+  res.set("Content-Type", "image/jpeg");
+  res.set(
+    "Content-Disposition",
+    disposition === "attachment"
+      ? `attachment; filename="${asset.filename}"`
+      : `inline; filename="${asset.filename}"`
+  );
   return res.sendFile(asset.path);
 });
 

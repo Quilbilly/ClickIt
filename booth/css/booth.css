@@ -299,6 +299,15 @@ h2 {
   place-items: center;
 }
 
+.email-layout {
+  width: min(100%, 72rem);
+  display: grid;
+  grid-template-columns: minmax(18rem, 28rem) minmax(20rem, 1fr);
+  gap: 1.25rem;
+  align-items: stretch;
+  animation: softIn 0.45s ease both;
+}
+
 .email-card,
 .done-copy {
   width: min(100%, 34rem);
@@ -308,6 +317,15 @@ h2 {
   padding: 2rem;
   box-shadow: var(--shadow);
   animation: softIn 0.45s ease both;
+}
+
+.email-layout .email-card {
+  width: 100%;
+  animation: none;
+}
+
+.email-keyboard {
+  min-height: 100%;
 }
 
 .email-form {
@@ -365,6 +383,67 @@ h2 {
 .email-form .cta {
   margin-top: 0.25rem;
   width: 100%;
+}
+
+.osk {
+  height: 100%;
+  display: grid;
+  align-content: center;
+  gap: 0.55rem;
+  padding: 1rem;
+  background: rgba(12, 20, 22, 0.72);
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 0.15rem);
+  box-shadow: var(--shadow);
+}
+
+.osk-keys {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.osk-row {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.osk-row--actions {
+  grid-template-columns: 2.2fr 1.2fr 1.2fr;
+}
+
+.osk-row--shortcuts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.osk-key {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink);
+  min-height: 3.1rem;
+  padding: 0.35rem 0.25rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 120ms ease, transform 120ms ease;
+}
+
+.osk-key:active {
+  transform: scale(0.97);
+  background: rgba(245, 166, 35, 0.22);
+}
+
+.osk-key--shortcut {
+  font-size: 0.95rem;
+  color: var(--accent);
+}
+
+.osk-key--back,
+.osk-key--clear {
+  font-size: 0.95rem;
 }
 
 .done-copy--qr {
@@ -440,6 +519,10 @@ h2 {
     gap: 1.25rem;
   }
 
+  .email-layout {
+    grid-template-columns: 1fr;
+  }
+
   .stage {
     height: auto;
     min-height: calc(100vh - 4rem);
@@ -451,5 +534,10 @@ h2 {
 
   .topbar .event {
     display: none;
+  }
+
+  .osk-key {
+    min-height: 2.7rem;
+    font-size: 0.95rem;
   }
 }

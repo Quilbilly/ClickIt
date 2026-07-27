@@ -1,8 +1,11 @@
+import { createTouchKeyboard } from "./keyboard.js";
+
 const state = {
   config: null,
   sessionId: null,
   liveTimer: null,
   idleTimer: null,
+  keyboard: null,
 };
 
 const els = {
@@ -33,6 +36,7 @@ const els = {
   btnQrOnly: document.getElementById("btnQrOnly"),
   btnAgain: document.getElementById("btnAgain"),
   btnErrorReset: document.getElementById("btnErrorReset"),
+  emailKeyboard: document.getElementById("emailKeyboard"),
 };
 
 async function api(path, options = {}) {
@@ -276,13 +280,29 @@ function resetToAttract() {
   refreshCamera();
 }
 
+function mountTouchKeyboard() {
+  if (state.keyboard || !els.emailKeyboard) return;
+  state.keyboard = createTouchKeyboard({
+    target: () => els.emailInput,
+    onChange: () => {
+      resetIdleTimer("email");
+    },
+  });
+  els.emailKeyboard.appendChild(state.keyboard.element);
+}
+
 els.btnStart.addEventListener("click", startSession);
 els.btnRetake.addEventListener("click", retake);
-els.btnKeep.addEventListener("click", () => showScreen("email"));
+els.btnKeep.addEventListener("click", () => {
+  mountTouchKeyboard();
+  showScreen("email");
+  els.emailInput.focus({ preventScroll: true });
+});
 els.emailForm.addEventListener("submit", submitEmail);
 els.btnQrOnly.addEventListener("click", submitQrOnly);
 els.btnAgain.addEventListener("click", resetToAttract);
 els.btnErrorReset.addEventListener("click", resetToAttract);
+els.emailInput.addEventListener("focus", mountTouchKeyboard);
 
 await loadConfig();
 showScreen("attract");

@@ -61,22 +61,25 @@
 
     <!-- Email -->
     <section class="screen screen--email" data-screen-panel="email" hidden>
-      <div class="email-card">
-        <h2>Where should we send them?</h2>
-        <p class="lede">Email a private link, or skip and scan a QR code instead.</p>
-        <form id="emailForm" class="email-form" autocomplete="off">
-          <label class="field">
-            <span>Email</span>
-            <input id="emailInput" name="email" type="email" inputmode="email" required placeholder="you@email.com" autocomplete="email">
-          </label>
-          <label class="consent" id="consentRow">
-            <input id="consentInput" type="checkbox">
-            <span>I agree to receive my photos by email for this event.</span>
-          </label>
-          <p class="form-error" id="emailError" hidden></p>
-          <button type="submit" class="cta cta--primary" id="btnSend">Send my photos</button>
-          <button type="button" class="cta cta--ghost" id="btnQrOnly">Skip email — show QR</button>
-        </form>
+      <div class="email-layout">
+        <div class="email-card">
+          <h2>Where should we send them?</h2>
+          <p class="lede">Email a private link, or skip and scan a QR code instead.</p>
+          <form id="emailForm" class="email-form" autocomplete="off">
+            <label class="field">
+              <span>Email</span>
+              <input id="emailInput" name="email" type="email" inputmode="none" required placeholder="you@email.com" autocomplete="off">
+            </label>
+            <label class="consent" id="consentRow">
+              <input id="consentInput" type="checkbox">
+              <span>I agree to receive my photos by email for this event.</span>
+            </label>
+            <p class="form-error" id="emailError" hidden></p>
+            <button type="submit" class="cta cta--primary" id="btnSend">Send my photos</button>
+            <button type="button" class="cta cta--ghost" id="btnQrOnly">Skip email — show QR</button>
+          </form>
+        </div>
+        <div id="emailKeyboard" class="email-keyboard" aria-label="Touch keyboard"></div>
       </div>
     </section>
 
