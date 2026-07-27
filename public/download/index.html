@@ -40,6 +40,15 @@
       background: #000;
     }
     .meta { color: var(--muted); margin-top: 0.5rem; }
+    .missing {
+      display: grid;
+      place-items: center;
+      aspect-ratio: 3 / 2;
+      border-radius: 1rem;
+      border: 1px dashed var(--line);
+      color: var(--muted);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -59,14 +68,26 @@
       const res = await fetch(`/api/download/${token}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Unable to load photos");
-      meta.textContent = data.expiresAt
+      const cloudCount = (data.photos || []).filter((p) => p.source === "cloud").length;
+      const base = data.expiresAt
         ? `${data.eventPhotos} photo${data.eventPhotos === 1 ? "" : "s"} · link expires ${new Date(data.expiresAt).toLocaleString()}`
         : `${data.eventPhotos} photo${data.eventPhotos === 1 ? "" : "s"}`;
+      meta.textContent = cloudCount
+        ? `${base} · served from cloud`
+        : base;
       for (const photo of data.photos) {
+        if (!photo.previewUrl && !photo.downloadUrl) {
+          const missing = document.createElement("div");
+          missing.className = "missing";
+          missing.textContent = "Unavailable";
+          grid.appendChild(missing);
+          continue;
+        }
         const a = document.createElement("a");
-        a.href = photo.url;
+        a.href = photo.downloadUrl || photo.url;
         a.download = photo.filename;
-        a.innerHTML = `<img src="${photo.url}" alt="Photo ${photo.index}"><p class="meta">Download ${photo.filename}</p>`;
+        a.rel = "noopener";
+        a.innerHTML = `<img src="${photo.previewUrl || photo.url}" alt="Photo ${photo.index}"><p class="meta">Download ${photo.filename}</p>`;
         grid.appendChild(a);
       }
     } catch (err) {

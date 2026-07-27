@@ -106,6 +106,18 @@ th {
   font-weight: 600;
 }
 
+.session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.session-actions .cta {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
+}
+
 @media (max-width: 900px) {
   .admin-grid {
     grid-template-columns: 1fr;

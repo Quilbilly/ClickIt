@@ -5,7 +5,7 @@ import { getCamera, getCameraStatus } from "../services/camera/index.js";
 import { sendDownloadEmail } from "../services/email.js";
 import { config } from "../config.js";
 import { listJobs, processQueueOnce, enqueueSessionEmail, enqueueSessionUpload } from "../services/queue.js";
-import { storageStatus } from "../services/storage.js";
+import { storageStatus, pruneLocalSessionPhotos } from "../services/storage.js";
 import { makeDownloadQr } from "../services/qr.js";
 
 const router = Router();
@@ -35,6 +35,8 @@ router.get("/sessions", async (_req, res) => {
       emailedAt: s.emailedAt,
       expiresAt: s.expiresAt,
       error: s.error,
+      cloudUploaded: Boolean(s.cloud?.uploadedAt),
+      localPrunedAt: s.localPrunedAt || null,
     })),
   });
 });
@@ -115,6 +117,23 @@ router.get("/sessions/:id/qr", async (req, res) => {
   const downloadUrl = `${config.publicBaseUrl}/d/${session.token}`;
   const qrDataUrl = await makeDownloadQr(downloadUrl);
   res.json({ downloadUrl, qrDataUrl });
+});
+
+router.post("/sessions/:id/prune-local", async (req, res) => {
+  const session = await getSession(req.params.id);
+  if (!session) return res.status(404).json({ error: "Not found" });
+  try {
+    const result = await pruneLocalSessionPhotos(session);
+    session.localPrunedAt = new Date().toISOString();
+    session.localPrune = result;
+    await saveSession(session);
+    res.json({ ok: true, ...result, sessionId: session.id });
+  } catch (err) {
+    res.status(err.code === "PRUNE_REQUIRES_S3" || err.code === "PRUNE_NOT_UPLOADED" ? 400 : 500).json({
+      error: err.message,
+      code: err.code,
+    });
+  }
 });
 
 export default router;

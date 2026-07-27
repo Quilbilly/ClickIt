@@ -89,15 +89,18 @@ async function refreshAll() {
   form.downloadLinkHours.value = settings.downloadLinkHours;
 
   els.sessionsBody.innerHTML = "";
+  const canPrune = stats.storage?.provider === "s3" && stats.storage?.configured;
   for (const s of sessions.sessions.slice(0, 40)) {
     const tr = document.createElement("tr");
+    const statusLabel = s.localPrunedAt ? `${s.status} · pruned` : s.status;
     tr.innerHTML = `
       <td>${new Date(s.createdAt).toLocaleString()}</td>
-      <td>${s.status}</td>
+      <td>${statusLabel}</td>
       <td>${s.email || "—"}</td>
       <td>${s.photoCount}</td>
-      <td></td>
+      <td class="session-actions"></td>
     `;
+    const actions = tr.querySelector(".session-actions");
     if (s.email) {
       const btn = document.createElement("button");
       btn.type = "button";
@@ -118,7 +121,31 @@ async function refreshAll() {
           btn.disabled = false;
         }
       });
-      tr.lastElementChild.appendChild(btn);
+      actions.appendChild(btn);
+    }
+    if (canPrune && s.cloudUploaded && !s.localPrunedAt) {
+      const pruneBtn = document.createElement("button");
+      pruneBtn.type = "button";
+      pruneBtn.className = "cta cta--ghost";
+      pruneBtn.textContent = "Prune local";
+      pruneBtn.title = "Delete local copies after confirming cloud upload";
+      pruneBtn.addEventListener("click", async () => {
+        if (!confirm(`Delete local files for session ${s.id}? Cloud copies will remain.`)) return;
+        pruneBtn.disabled = true;
+        try {
+          const result = await adminApi(`/admin/sessions/${s.id}/prune-local`, {
+            method: "POST",
+            body: "{}",
+          });
+          pruneBtn.textContent = `Pruned ${result.pruned?.length || 0}`;
+          await refreshAll();
+        } catch (err) {
+          pruneBtn.textContent = "Failed";
+          alert(err.message);
+          pruneBtn.disabled = false;
+        }
+      });
+      actions.appendChild(pruneBtn);
     }
     els.sessionsBody.appendChild(tr);
   }
