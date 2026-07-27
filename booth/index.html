@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClickIt</title>
+  <meta name="description" content="ClickIt photo booth">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/booth.css">
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <p class="brand">ClickIt</p>
+    <p class="event" id="eventName">Loading…</p>
+    <p class="camera-pill" id="cameraPill">Camera…</p>
+  </header>
+
+  <main id="app" class="stage" data-screen="attract">
+    <!-- Attract -->
+    <section class="screen screen--attract" data-screen-panel="attract">
+      <div class="attract-copy">
+        <p class="brand-hero">ClickIt</p>
+        <h1 id="attractTagline">Step up. Smile. Walk away with your photos.</h1>
+        <p class="lede">Tap below when you’re ready. We’ll count down, snap a set, and email you a download link.</p>
+        <button type="button" class="cta cta--primary" id="btnStart">Take my picture</button>
+      </div>
+      <div class="attract-preview" aria-hidden="true">
+        <img id="livePreviewAttract" alt="" class="live-frame">
+      </div>
+    </section>
+
+    <!-- Countdown / Capture -->
+    <section class="screen screen--capture" data-screen-panel="capture" hidden>
+      <div class="capture-stage">
+        <img id="livePreviewCapture" alt="" class="live-frame live-frame--full">
+        <div class="countdown" id="countdown" hidden>
+          <span id="countdownValue">3</span>
+        </div>
+        <p class="capture-status" id="captureStatus">Get ready</p>
+        <p class="capture-progress" id="captureProgress"></p>
+      </div>
+    </section>
+
+    <!-- Review -->
+    <section class="screen screen--review" data-screen-panel="review" hidden>
+      <div class="review-copy">
+        <h2>Looking good?</h2>
+        <p class="lede">Keep these, or retake the set.</p>
+        <div class="actions">
+          <button type="button" class="cta cta--ghost" id="btnRetake">Retake</button>
+          <button type="button" class="cta cta--primary" id="btnKeep">Keep &amp; continue</button>
+        </div>
+      </div>
+      <div class="review-grid" id="reviewGrid"></div>
+    </section>
+
+    <!-- Email -->
+    <section class="screen screen--email" data-screen-panel="email" hidden>
+      <div class="email-card">
+        <h2>Where should we send them?</h2>
+        <p class="lede">Email a private link, or skip and scan a QR code instead.</p>
+        <form id="emailForm" class="email-form" autocomplete="off">
+          <label class="field">
+            <span>Email</span>
+            <input id="emailInput" name="email" type="email" inputmode="email" required placeholder="you@email.com" autocomplete="email">
+          </label>
+          <label class="consent" id="consentRow">
+            <input id="consentInput" type="checkbox">
+            <span>I agree to receive my photos by email for this event.</span>
+          </label>
+          <p class="form-error" id="emailError" hidden></p>
+          <button type="submit" class="cta cta--primary" id="btnSend">Send my photos</button>
+          <button type="button" class="cta cta--ghost" id="btnQrOnly">Skip email — show QR</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Done -->
+    <section class="screen screen--done" data-screen-panel="done" hidden>
+      <div class="done-copy done-copy--qr">
+        <p class="brand-hero">ClickIt</p>
+        <h2>You’re all set</h2>
+        <p class="lede" id="doneMessage">Check your inbox for the download link.</p>
+        <div class="qr-block" id="qrBlock" hidden>
+          <img id="qrImage" alt="QR code to download photos">
+          <p class="qr-hint">Scan to download on your phone</p>
+        </div>
+        <button type="button" class="cta cta--primary" id="btnAgain">Start over</button>
+      </div>
+    </section>
+
+    <!-- Error -->
+    <section class="screen screen--error" data-screen-panel="error" hidden>
+      <div class="done-copy">
+        <h2>Something went wrong</h2>
+        <p class="lede" id="errorMessage">Please ask a staff member for help.</p>
+        <button type="button" class="cta cta--primary" id="btnErrorReset">Try again</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

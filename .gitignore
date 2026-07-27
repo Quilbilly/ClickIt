@@ -1,0 +1,26 @@
+node_modules/
+.env
+.env.*
+!.env.example
+data/sessions/*
+data/uploads/*
+data/tmp/*
+data/queue/*
+data/settings.json
+!data/sessions/.gitkeep
+!data/uploads/.gitkeep
+!data/tmp/.gitkeep
+!data/queue/.gitkeep
+
+# Sony Camera Remote SDK (licensed binaries — keep local only)
+vendor/sony-camera-remote-sdk/**
+!vendor/sony-camera-remote-sdk/README.md
+*.zip
+*.7z
+*.dmg
+
+*.log
+.DS_Store
+Thumbs.db
+
+

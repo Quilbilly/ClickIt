@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your ClickIt photos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/booth/css/booth.css">
+  <style>
+    body { overflow: auto; }
+    .download {
+      position: relative;
+      z-index: 2;
+      width: min(900px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2rem 0 3rem;
+    }
+    .download h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      margin: 0.4rem 0 0.6rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.9rem;
+      margin-top: 1.5rem;
+    }
+    .grid a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+    }
+    .grid img {
+      width: 100%;
+      aspect-ratio: 3 / 2;
+      object-fit: cover;
+      border-radius: 1rem;
+      background: #000;
+    }
+    .meta { color: var(--muted); margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <main class="download">
+    <p class="brand">ClickIt</p>
+    <h1>Your photos</h1>
+    <p class="meta" id="meta">Loading…</p>
+    <div class="grid" id="grid"></div>
+  </main>
+  <script type="module">
+    const token = location.pathname.split("/").filter(Boolean).pop();
+    const meta = document.getElementById("meta");
+    const grid = document.getElementById("grid");
+    try {
+      const res = await fetch(`/api/download/${token}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Unable to load photos");
+      meta.textContent = data.expiresAt
+        ? `${data.eventPhotos} photo${data.eventPhotos === 1 ? "" : "s"} · link expires ${new Date(data.expiresAt).toLocaleString()}`
+        : `${data.eventPhotos} photo${data.eventPhotos === 1 ? "" : "s"}`;
+      for (const photo of data.photos) {
+        const a = document.createElement("a");
+        a.href = photo.url;
+        a.download = photo.filename;
+        a.innerHTML = `<img src="${photo.url}" alt="Photo ${photo.index}"><p class="meta">Download ${photo.filename}</p>`;
+        grid.appendChild(a);
+      }
+    } catch (err) {
+      meta.textContent = err.message;
+    }
+  </script>
+</body>
+</html>

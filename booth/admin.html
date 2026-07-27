@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClickIt Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/booth.css">
+  <link rel="stylesheet" href="./css/admin.css">
+</head>
+<body class="admin-body">
+  <div class="atmosphere" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <main class="admin">
+    <header class="admin-header">
+      <div>
+        <p class="brand">ClickIt</p>
+        <h1>Booth admin</h1>
+      </div>
+      <a class="cta cta--ghost" href="/booth/">Open booth</a>
+    </header>
+
+    <section class="admin-card" id="authCard">
+      <h2>Sign in</h2>
+      <p class="lede">Use an admin token from your `.env` (`ADMIN_TOKENS`).</p>
+      <label class="field">
+        <span>Admin token</span>
+        <input id="tokenInput" type="password" placeholder="dev-admin-token">
+      </label>
+      <button type="button" class="cta cta--primary" id="btnAuth">Continue</button>
+      <p class="form-error" id="authError" hidden></p>
+    </section>
+
+    <div id="adminApp" hidden>
+      <section class="admin-grid">
+        <article class="admin-card">
+          <h2>Status</h2>
+          <dl class="stats" id="stats"></dl>
+          <p class="camera-line" id="cameraLine">Camera…</p>
+          <p class="camera-line" id="storageLine">Storage…</p>
+          <p class="camera-line" id="queueLine">Queue…</p>
+          <button type="button" class="cta cta--ghost" id="btnProcessQueue">Process queue now</button>
+        </article>
+
+        <article class="admin-card">
+          <h2>Event settings</h2>
+          <form id="settingsForm" class="settings-form">
+            <label class="field"><span>Event name</span><input name="eventName" required></label>
+            <label class="field"><span>Attract tagline</span><input name="attractTagline" required></label>
+            <label class="field"><span>Countdown (seconds)</span><input name="countdownSeconds" type="number" min="0" max="30" required></label>
+            <label class="field"><span>Photos per session</span><input name="photoCount" type="number" min="1" max="12" required></label>
+            <label class="field"><span>Interval (ms)</span><input name="intervalMs" type="number" min="250" max="10000" required></label>
+            <label class="field"><span>Accent color</span><input name="brandAccent" type="color"></label>
+            <label class="consent"><input name="allowRetake" type="checkbox"><span>Allow retakes</span></label>
+            <label class="consent"><input name="requireEmailConsent" type="checkbox"><span>Require email consent</span></label>
+            <label class="consent"><input name="allowQrOnly" type="checkbox"><span>Allow QR-only delivery</span></label>
+            <label class="field"><span>Email subject</span><input name="emailSubject" required></label>
+            <label class="field"><span>Download link hours</span><input name="downloadLinkHours" type="number" min="1" max="8760" required></label>
+            <button type="submit" class="cta cta--primary">Save settings</button>
+            <p class="form-ok" id="settingsOk" hidden>Saved</p>
+            <p class="form-error" id="settingsError" hidden></p>
+          </form>
+        </article>
+      </section>
+
+      <section class="admin-card">
+        <div class="admin-row">
+          <h2>Recent sessions</h2>
+          <button type="button" class="cta cta--ghost" id="btnRefresh">Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>When</th>
+                <th>Status</th>
+                <th>Email</th>
+                <th>Photos</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="sessionsBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./js/admin.js"></script>
+</body>
+</html>
