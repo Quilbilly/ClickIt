@@ -15,6 +15,8 @@ npm run dev
 - Booth: [http://localhost:8787/booth/](http://localhost:8787/booth/)
 - Admin: [http://localhost:8787/admin](http://localhost:8787/admin) (token `dev-admin-token`)
 
+**Windows + Sony camera:** see [WINDOWS.md](./WINDOWS.md).
+
 ## The four production pillars
 
 ### 1) Electron kiosk shell
