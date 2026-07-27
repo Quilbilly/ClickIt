@@ -32,7 +32,7 @@ export function createSonyCamera() {
       }
       if (err.code) throw err;
       const wrapped = new Error(
-        `Sony sidecar unreachable at ${base}. Start sidecars/sony-bridge or your SDK binary.`
+        `Sony sidecar unreachable at ${base}. Run npm run sony-bridge (native CrSDK on Windows, or Node stub).`
       );
       wrapped.code = "SONY_SIDECAR_UNREACHABLE";
       wrapped.cause = err;

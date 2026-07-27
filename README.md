@@ -25,15 +25,18 @@ Fullscreen booth app. See [KIOSK.md](./KIOSK.md) for auto-start.
 
 ### 2) Sony ILCE-7RM5 tether bridge
 ```bash
-# Terminal A — protocol sidecar (dev stand-in for SDK binary)
+# Once on the Windows booth PC — extract SDK, then build the CrSDK binary
+# vendor/sony-camera-remote-sdk/windows/  ← Windows x64 Camera Remote SDK
+npm run sony-bridge:build
+
+# Terminal A — native bridge on Windows (falls back to Node stub otherwise)
 npm run sony-bridge
 
 # Terminal B
 CAMERA_PROVIDER=sony npm run dev
 ```
-Protocol docs: [sidecars/sony-bridge/PROTOCOL.md](./sidecars/sony-bridge/PROTOCOL.md)
-
-Replace the Node sidecar with a Sony Camera Remote SDK binary that speaks the same HTTP JSON API.
+Protocol docs: [sidecars/sony-bridge/PROTOCOL.md](./sidecars/sony-bridge/PROTOCOL.md)  
+Native build: [sidecars/sony-bridge/native/README.md](./sidecars/sony-bridge/native/README.md)
 
 ### 3) S3/R2 + real SMTP
 Set in `.env`:
@@ -64,7 +67,9 @@ EMAIL_FROM="ClickIt <noreply@yourdomain.com>"
 | Command | Purpose |
 |---|---|
 | `npm run dev` | API + booth (nodemon) |
-| `npm run sony-bridge` | Dev Sony protocol sidecar |
+| `npm run sony-bridge` | Sony tether bridge (native CrSDK on Windows, else Node stub) |
+| `npm run sony-bridge:build` | Build Windows CrSDK bridge (`clickit-sony-bridge.exe`) |
+| `npm run sony-bridge:dev` | Force Node protocol stub |
 | `npm run dev:sony` | Sidecar + server together |
 | `npm run kiosk` | Electron fullscreen booth |
 
@@ -75,7 +80,7 @@ EMAIL_FROM="ClickIt <noreply@yourdomain.com>"
   booth/                 # Kiosk + admin UI
   electron/              # Fullscreen desktop shell
   public/download/       # Guest download pages
-  sidecars/sony-bridge/  # Camera protocol (+ SDK swap point)
+  sidecars/sony-bridge/  # Camera protocol + Windows CrSDK native bridge
   server/
     services/
       camera/            # mock + sony (sidecar client)

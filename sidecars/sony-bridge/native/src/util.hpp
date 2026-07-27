@@ -1,0 +1,114 @@
+#pragma once
+
+#include <cstdio>
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <vector>
+
+#if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
+namespace clickit {
+
+inline std::string json_escape(std::string_view in) {
+  std::string out;
+  out.reserve(in.size() + 8);
+  for (unsigned char c : in) {
+    switch (c) {
+      case '\\': out += "\\\\"; break;
+      case '"': out += "\\\""; break;
+      case '\n': out += "\\n"; break;
+      case '\r': out += "\\r"; break;
+      case '\t': out += "\\t"; break;
+      default:
+        if (c < 0x20) {
+          char buf[8];
+          std::snprintf(buf, sizeof(buf), "\\u%04x", c);
+          out += buf;
+        } else {
+          out.push_back(static_cast<char>(c));
+        }
+    }
+  }
+  return out;
+}
+
+inline std::string base64_encode(const std::uint8_t* data, std::size_t len) {
+  static constexpr char kTable[] =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  std::string out;
+  out.reserve(((len + 2) / 3) * 4);
+  std::size_t i = 0;
+  while (i + 2 < len) {
+    const std::uint32_t n = (data[i] << 16) | (data[i + 1] << 8) | data[i + 2];
+    out.push_back(kTable[(n >> 18) & 63]);
+    out.push_back(kTable[(n >> 12) & 63]);
+    out.push_back(kTable[(n >> 6) & 63]);
+    out.push_back(kTable[n & 63]);
+    i += 3;
+  }
+  if (i < len) {
+    const std::uint32_t n = data[i] << 16 | (i + 1 < len ? data[i + 1] << 8 : 0);
+    out.push_back(kTable[(n >> 18) & 63]);
+    out.push_back(kTable[(n >> 12) & 63]);
+    out.push_back(i + 1 < len ? kTable[(n >> 6) & 63] : '=');
+    out.push_back('=');
+  }
+  return out;
+}
+
+inline std::string base64_encode(const std::vector<std::uint8_t>& bytes) {
+  return base64_encode(bytes.data(), bytes.size());
+}
+
+#if defined(_WIN32)
+inline std::string narrow(const wchar_t* wide) {
+  if (!wide || !*wide) return {};
+  const int needed = WideCharToMultiByte(CP_UTF8, 0, wide, -1, nullptr, 0, nullptr, nullptr);
+  if (needed <= 1) return {};
+  std::string out(static_cast<std::size_t>(needed - 1), '\0');
+  WideCharToMultiByte(CP_UTF8, 0, wide, -1, out.data(), needed, nullptr, nullptr);
+  return out;
+}
+
+inline std::wstring widen(std::string_view utf8) {
+  if (utf8.empty()) return {};
+  const int needed = MultiByteToWideChar(
+      CP_UTF8, 0, utf8.data(), static_cast<int>(utf8.size()), nullptr, 0);
+  if (needed <= 0) return {};
+  std::wstring out(static_cast<std::size_t>(needed), L'\0');
+  MultiByteToWideChar(
+      CP_UTF8, 0, utf8.data(), static_cast<int>(utf8.size()), out.data(), needed);
+  return out;
+}
+#else
+inline std::string narrow(const char* s) { return s ? std::string(s) : std::string{}; }
+inline std::string widen(std::string_view utf8) { return std::string(utf8); }
+#endif
+
+inline std::string read_file_bytes_as_string(const std::string& path) {
+  FILE* f = nullptr;
+#if defined(_WIN32)
+  const auto wpath = widen(path);
+  _wfopen_s(&f, wpath.c_str(), L"rb");
+#else
+  f = std::fopen(path.c_str(), "rb");
+#endif
+  if (!f) return {};
+  std::string data;
+  char buf[1 << 15];
+  while (true) {
+    const auto n = std::fread(buf, 1, sizeof(buf), f);
+    if (n == 0) break;
+    data.append(buf, buf + n);
+  }
+  std::fclose(f);
+  return data;
+}
+
+}  // namespace clickit

@@ -1,0 +1,60 @@
+cmake_minimum_required(VERSION 3.20)
+project(clickit_sony_bridge LANGUAGES CXX)
+
+if(NOT WIN32)
+  message(FATAL_ERROR "clickit-sony-bridge is Windows x64 only for now.")
+endif()
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+find_package(SonyCrSDK REQUIRED)
+
+add_executable(clickit-sony-bridge
+  src/main.cpp
+  src/camera_session.cpp
+  src/device_callback.cpp
+  src/http_server.cpp
+)
+
+target_include_directories(clickit-sony-bridge PRIVATE
+  "${CMAKE_CURRENT_LIST_DIR}/src"
+  "${SonyCrSDK_INCLUDE_DIR}"
+)
+
+target_link_libraries(clickit-sony-bridge PRIVATE
+  "${SonyCrSDK_LIBRARY}"
+  ws2_32
+)
+
+target_compile_definitions(clickit-sony-bridge PRIVATE
+  NOMINMAX
+  WIN32_LEAN_AND_MEAN
+  _CRT_SECURE_NO_WARNINGS
+)
+
+if(MSVC)
+  target_compile_options(clickit-sony-bridge PRIVATE /W4 /EHsc /utf-8)
+endif()
+
+# Runtime: Cr_Core.dll + CrAdapter must sit next to the executable.
+set(_dist_dir "${CMAKE_CURRENT_LIST_DIR}/dist")
+set_target_properties(clickit-sony-bridge PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY "${_dist_dir}"
+  RUNTIME_OUTPUT_DIRECTORY_DEBUG "${_dist_dir}"
+  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${_dist_dir}"
+  RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${_dist_dir}"
+  RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${_dist_dir}"
+)
+
+add_custom_command(TARGET clickit-sony-bridge POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${_dist_dir}"
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+          "${SonyCrSDK_RUNTIME_DIR}"
+          "${_dist_dir}"
+  COMMENT "Copying Sony CrSDK runtime (DLLs / CrAdapter) beside clickit-sony-bridge.exe"
+)
+
+install(TARGETS clickit-sony-bridge RUNTIME DESTINATION bin)
