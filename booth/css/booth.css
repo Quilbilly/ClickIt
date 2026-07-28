@@ -109,12 +109,17 @@ input {
   padding: 0 1.5rem 1.5rem;
 }
 
+/* Author display rules must not defeat the hidden attribute. */
+.screen[hidden] {
+  display: none !important;
+}
+
 .screen {
   height: 100%;
 }
 
-.screen--attract,
-.screen--review {
+.screen--attract:not([hidden]),
+.screen--review:not([hidden]) {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
   gap: 2rem;
@@ -294,9 +299,9 @@ h2 {
   animation: softIn 0.5s ease both;
 }
 
-.screen--email,
-.screen--done,
-.screen--error {
+.screen--email:not([hidden]),
+.screen--done:not([hidden]),
+.screen--error:not([hidden]) {
   display: grid;
   place-items: center;
 }
@@ -435,8 +440,8 @@ h2 {
     overflow: auto;
   }
 
-  .screen--attract,
-  .screen--review {
+  .screen--attract:not([hidden]),
+  .screen--review:not([hidden]) {
     grid-template-columns: 1fr;
     align-content: start;
     gap: 1.25rem;
