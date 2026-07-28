@@ -35,9 +35,19 @@ function run(command, args, opts = {}) {
 }
 
 if (useNative) {
+  const distDir = path.dirname(nativeExe);
+  const adapterDir = path.join(distDir, "CrAdapter");
+  const coreDll = path.join(distDir, "Cr_Core.dll");
+  if (!fs.existsSync(coreDll) || !fs.existsSync(adapterDir)) {
+    console.warn(
+      "[sony-bridge] WARNING: Cr_Core.dll and/or CrAdapter missing beside the exe.\n" +
+        `  Expected under: ${distDir}\n` +
+        "  Run: npm run sony-bridge:stage-runtime   (or rebuild with npm run sony-bridge:build)"
+    );
+  }
   console.log(`[sony-bridge] starting native CrSDK bridge: ${nativeExe}`);
   console.log(`[sony-bridge] protocol http://127.0.0.1:${port}`);
-  run(nativeExe, [], { windowsHide: true });
+  run(nativeExe, [], { windowsHide: true, cwd: distDir });
 } else {
   if (process.platform === "win32" && !forceDev) {
     console.warn(

@@ -5,8 +5,10 @@
 #   SonyCrSDK_ROOT
 #   SonyCrSDK_INCLUDE_DIR   # directory containing CameraRemote_SDK.h
 #   SonyCrSDK_LIBRARY       # Cr_Core import library
-#   SonyCrSDK_LIBRARY_DIR   # directory containing Cr_Core.lib / Cr_Core.dll
-#   SonyCrSDK_RUNTIME_DIR   # directory to copy runtime DLLs / CrAdapter from
+#   SonyCrSDK_LIBRARY_DIR   # directory containing Cr_Core.lib
+#   SonyCrSDK_RUNTIME_DIR   # preferred directory containing Cr_Core.dll (+ usually CrAdapter)
+#   SonyCrSDK_CORE_DLL      # full path to Cr_Core.dll (if found)
+#   SonyCrSDK_ADAPTER_DIR   # full path to CrAdapter directory (if found)
 
 cmake_minimum_required(VERSION 3.20)
 
@@ -25,9 +27,6 @@ endif()
 
 # Common layouts:
 #   <root>/app/CRSDK/CameraRemote_SDK.h + <root>/external/crsdk/Cr_Core.lib
-#   <root>/CRSDK/CameraRemote_SDK.h
-#   <root>/include/CRSDK/CameraRemote_SDK.h
-#   <root>/include/CameraRemote_SDK.h
 #   nested CrSDK_v* folder under windows/
 file(GLOB_RECURSE _sdk_headers
   LIST_DIRECTORIES FALSE
@@ -89,7 +88,46 @@ endif()
 
 list(GET _sdk_libs 0 SonyCrSDK_LIBRARY)
 get_filename_component(SonyCrSDK_LIBRARY_DIR "${SonyCrSDK_LIBRARY}" DIRECTORY)
-set(SonyCrSDK_RUNTIME_DIR "${SonyCrSDK_LIBRARY_DIR}")
+
+# Runtime pieces can sit beside the .lib or elsewhere in the tree.
+file(GLOB_RECURSE _sdk_dlls
+  LIST_DIRECTORIES FALSE
+  "${SonyCrSDK_ROOT}/Cr_Core.dll"
+  "${SonyCrSDK_ROOT}/*/Cr_Core.dll"
+  "${SonyCrSDK_ROOT}/*/*/Cr_Core.dll"
+  "${SonyCrSDK_ROOT}/*/*/*/Cr_Core.dll"
+  "${SonyCrSDK_ROOT}/*/*/*/*/Cr_Core.dll"
+)
+if(_sdk_dlls)
+  list(GET _sdk_dlls 0 SonyCrSDK_CORE_DLL)
+  get_filename_component(SonyCrSDK_RUNTIME_DIR "${SonyCrSDK_CORE_DLL}" DIRECTORY)
+else()
+  set(SonyCrSDK_CORE_DLL "")
+  set(SonyCrSDK_RUNTIME_DIR "${SonyCrSDK_LIBRARY_DIR}")
+endif()
+
+file(GLOB_RECURSE _adapter_markers
+  LIST_DIRECTORIES FALSE
+  "${SonyCrSDK_ROOT}/CrAdapter/Cr_PTP_USB.dll"
+  "${SonyCrSDK_ROOT}/*/CrAdapter/Cr_PTP_USB.dll"
+  "${SonyCrSDK_ROOT}/*/*/CrAdapter/Cr_PTP_USB.dll"
+  "${SonyCrSDK_ROOT}/*/*/*/CrAdapter/Cr_PTP_USB.dll"
+  "${SonyCrSDK_ROOT}/*/*/*/*/CrAdapter/Cr_PTP_USB.dll"
+)
+if(_adapter_markers)
+  list(GET _adapter_markers 0 _adapter_dll)
+  get_filename_component(SonyCrSDK_ADAPTER_DIR "${_adapter_dll}" DIRECTORY)
+else()
+  # Fallback: directory named CrAdapter
+  file(GLOB_RECURSE _adapter_dirs LIST_DIRECTORIES TRUE "${SonyCrSDK_ROOT}/CrAdapter")
+  set(SonyCrSDK_ADAPTER_DIR "")
+  foreach(_d IN LISTS _adapter_dirs)
+    if(IS_DIRECTORY "${_d}" AND _d MATCHES "/CrAdapter$")
+      set(SonyCrSDK_ADAPTER_DIR "${_d}")
+      break()
+    endif()
+  endforeach()
+endif()
 
 # Prefer a discovered root that contains both app/ and external/ when present.
 get_filename_component(_maybe_external "${SonyCrSDK_LIBRARY_DIR}/.." ABSOLUTE)
@@ -104,7 +142,9 @@ find_package_handle_standard_args(SonyCrSDK
 )
 
 if(SonyCrSDK_FOUND)
-  message(STATUS "SonyCrSDK include: ${SonyCrSDK_INCLUDE_DIR}")
-  message(STATUS "SonyCrSDK library: ${SonyCrSDK_LIBRARY}")
-  message(STATUS "SonyCrSDK runtime: ${SonyCrSDK_RUNTIME_DIR}")
+  message(STATUS "SonyCrSDK include:  ${SonyCrSDK_INCLUDE_DIR}")
+  message(STATUS "SonyCrSDK library:  ${SonyCrSDK_LIBRARY}")
+  message(STATUS "SonyCrSDK runtime:  ${SonyCrSDK_RUNTIME_DIR}")
+  message(STATUS "SonyCrSDK core dll: ${SonyCrSDK_CORE_DLL}")
+  message(STATUS "SonyCrSDK adapter:  ${SonyCrSDK_ADAPTER_DIR}")
 endif()

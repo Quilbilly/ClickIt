@@ -64,7 +64,16 @@ const nativeExe = path.join(
   "dist",
   "clickit-sony-bridge.exe"
 );
+const distDir = path.dirname(nativeExe);
+const distDll = path.join(distDir, "Cr_Core.dll");
+const distAdapter = path.join(distDir, "CrAdapter");
 console.log(`Bridge:   ${fs.existsSync(nativeExe) ? nativeExe : "not built yet"}`);
+if (fs.existsSync(nativeExe)) {
+  console.log(`Dist DLL: ${fs.existsSync(distDll) ? distDll : "MISSING beside exe"}`);
+  console.log(
+    `Dist Adp: ${fs.existsSync(distAdapter) ? distAdapter : "MISSING beside exe"}`
+  );
+}
 
 const ok = Boolean(header && lib);
 if (!ok) {

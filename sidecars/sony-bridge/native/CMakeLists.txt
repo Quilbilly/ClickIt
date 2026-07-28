@@ -55,7 +55,26 @@ add_custom_command(TARGET clickit-sony-bridge POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory
           "${SonyCrSDK_RUNTIME_DIR}"
           "${_dist_dir}"
-  COMMENT "Copying Sony CrSDK runtime (DLLs / CrAdapter) beside clickit-sony-bridge.exe"
+  COMMENT "Copying Sony CrSDK runtime directory beside clickit-sony-bridge.exe"
 )
+
+if(SonyCrSDK_CORE_DLL)
+  add_custom_command(TARGET clickit-sony-bridge POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${SonyCrSDK_CORE_DLL}"
+            "${_dist_dir}/Cr_Core.dll"
+    COMMENT "Ensuring Cr_Core.dll is beside clickit-sony-bridge.exe"
+  )
+endif()
+
+if(SonyCrSDK_ADAPTER_DIR)
+  add_custom_command(TARGET clickit-sony-bridge POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${_dist_dir}/CrAdapter"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${SonyCrSDK_ADAPTER_DIR}"
+            "${_dist_dir}/CrAdapter"
+    COMMENT "Ensuring CrAdapter/ is beside clickit-sony-bridge.exe"
+  )
+endif()
 
 install(TARGETS clickit-sony-bridge RUNTIME DESTINATION bin)
