@@ -86,10 +86,43 @@ inline std::wstring widen(std::string_view utf8) {
       CP_UTF8, 0, utf8.data(), static_cast<int>(utf8.size()), out.data(), needed);
   return out;
 }
-#else
-inline std::string narrow(const char* s) { return s ? std::string(s) : std::string{}; }
-inline std::string widen(std::string_view utf8) { return std::string(utf8); }
 #endif
+
+// Sony CrChar is wchar_t in some SDK builds and char in others — support both.
+inline std::string narrow(const char* s) { return s ? std::string(s) : std::string{}; }
+
+template <typename CrCharT>
+inline std::string from_cr_chars(const CrCharT* s) {
+  if (!s) return {};
+  if constexpr (sizeof(CrCharT) == sizeof(wchar_t)) {
+#if defined(_WIN32)
+    return narrow(reinterpret_cast<const wchar_t*>(s));
+#else
+    // Unlikely path on non-Windows.
+    std::string out;
+    for (const CrCharT* p = s; *p; ++p) out.push_back(static_cast<char>(*p));
+    return out;
+#endif
+  } else {
+    return narrow(reinterpret_cast<const char*>(s));
+  }
+}
+
+template <typename CrCharT>
+inline std::basic_string<CrCharT> to_cr_string(std::string_view utf8) {
+  std::basic_string<CrCharT> out;
+  if constexpr (sizeof(CrCharT) == sizeof(wchar_t)) {
+#if defined(_WIN32)
+    const auto wide = widen(utf8);
+    out.assign(reinterpret_cast<const CrCharT*>(wide.data()), wide.size());
+#else
+    out.assign(utf8.begin(), utf8.end());
+#endif
+  } else {
+    out.assign(utf8.begin(), utf8.end());
+  }
+  return out;
+}
 
 inline std::string read_file_bytes_as_string(const std::string& path) {
   FILE* f = nullptr;

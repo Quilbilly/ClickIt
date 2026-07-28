@@ -18,11 +18,7 @@ bool cr_ok(SCRSDK::CrError err) { return err == SCRSDK::CrError_None; }
 
 std::string model_from_info(const SCRSDK::ICrCameraObjectInfo* info) {
   if (!info) return "ILCE-7RM5";
-#if defined(_WIN32)
-  auto model = narrow(info->GetModel());
-#else
-  auto model = narrow(reinterpret_cast<const char*>(info->GetModel()));
-#endif
+  auto model = from_cr_chars(info->GetModel());
   return model.empty() ? "ILCE-7RM5" : model;
 }
 
@@ -238,13 +234,9 @@ bool CameraSession::connect(std::string* error) {
   }
 
   const auto dir = save_dir_();
-#if defined(_WIN32)
-  auto wdir = widen(dir);
-  auto prefix = widen("CLK");
-  err = SCRSDK::SetSaveInfo(handle_, wdir.data(), prefix.data(), 1);
-#else
-  err = SCRSDK::SetSaveInfo(handle_, const_cast<CrChar*>(dir.c_str()), const_cast<CrChar*>("CLK"), 1);
-#endif
+  auto cr_dir = to_cr_string<CrChar>(dir);
+  auto cr_prefix = to_cr_string<CrChar>("CLK");
+  err = SCRSDK::SetSaveInfo(handle_, cr_dir.data(), cr_prefix.data(), 1);
   if (!cr_ok(err)) {
     std::cerr << "[sony-bridge] SetSaveInfo failed; captures may not download to disk\n";
   }

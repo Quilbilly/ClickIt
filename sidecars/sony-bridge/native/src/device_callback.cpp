@@ -9,12 +9,7 @@ namespace clickit {
 namespace {
 
 std::string path_from_crchar(CrChar* filename) {
-  if (!filename) return {};
-#if defined(_WIN32)
-  return narrow(filename);
-#else
-  return narrow(reinterpret_cast<const char*>(filename));
-#endif
+  return from_cr_chars(filename);
 }
 
 }  // namespace
