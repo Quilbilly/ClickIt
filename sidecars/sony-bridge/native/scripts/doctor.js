@@ -7,7 +7,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(__dirname, "../../..");
+// scripts/ -> native/ -> sony-bridge/ -> sidecars/ -> repo root
+const repoRoot = path.resolve(__dirname, "../../../..");
 
 const sdkRoot =
   process.env.SONY_SDK_ROOT ||
