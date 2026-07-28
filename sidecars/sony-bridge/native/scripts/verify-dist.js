@@ -15,6 +15,7 @@ function exists(p) {
 
 const checks = [
   path.join(dist, "clickit-sony-bridge.exe"),
+  path.join(dist, "clickit-sony-bridge.exe.local"),
   path.join(dist, "Cr_Core.dll"),
   path.join(dist, "CrAdapter"),
   path.join(dist, "CrAdapter", "Cr_PTP_USB.dll"),

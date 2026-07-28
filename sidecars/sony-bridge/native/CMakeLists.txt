@@ -80,4 +80,11 @@ if(SonyCrSDK_ADAPTER_DIR)
   )
 endif()
 
+# Prefer DLLs from the exe directory over any Sony/Imaging Edge copies on PATH.
+add_custom_command(TARGET clickit-sony-bridge POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E touch
+          "${_dist_dir}/clickit-sony-bridge.exe.local"
+  COMMENT "Enabling .exe.local DLL redirection for Cr_Core.dll"
+)
+
 install(TARGETS clickit-sony-bridge RUNTIME DESTINATION bin)
