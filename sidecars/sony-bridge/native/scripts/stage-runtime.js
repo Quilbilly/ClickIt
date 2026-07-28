@@ -79,6 +79,9 @@ const destAdapter = path.join(distDir, "CrAdapter");
 fs.rmSync(destAdapter, { recursive: true, force: true });
 copyRecursive(adapter, destAdapter);
 
-console.log("\nStaged runtime into dist.");
+// Prefer local DLLs over Imaging Edge / PATH copies of Cr_Core.dll.
+fs.writeFileSync(path.join(distDir, "clickit-sony-bridge.exe.local"), "");
+
+console.log("\nStaged runtime into dist (including .exe.local redirection).");
 console.log("Restart the bridge:");
 console.log("  (stop Window A, then) npm run sony-bridge");

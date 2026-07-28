@@ -28,6 +28,7 @@ target_include_directories(clickit-sony-bridge PRIVATE
 target_link_libraries(clickit-sony-bridge PRIVATE
   "${SonyCrSDK_LIBRARY}"
   ws2_32
+  delayimp
 )
 
 target_compile_definitions(clickit-sony-bridge PRIVATE
@@ -38,6 +39,8 @@ target_compile_definitions(clickit-sony-bridge PRIVATE
 
 if(MSVC)
   target_compile_options(clickit-sony-bridge PRIVATE /W4 /EHsc /utf-8)
+  # Delay-load so main() can LoadLibraryEx the sibling Cr_Core.dll first.
+  target_link_options(clickit-sony-bridge PRIVATE "/DELAYLOAD:Cr_Core.dll")
 endif()
 
 # Runtime: Cr_Core.dll + CrAdapter must sit next to the executable.

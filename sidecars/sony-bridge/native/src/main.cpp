@@ -28,23 +28,42 @@ std::string env_string(const char* name, const char* fallback) {
 }
 
 #if defined(_WIN32)
-// CrSDK resolves CrAdapter relative to the running executable path / CWD.
-void ensure_runtime_paths() {
-  wchar_t path[MAX_PATH];
-  const DWORD n = GetModuleFileNameW(nullptr, path, MAX_PATH);
-  if (n == 0 || n >= MAX_PATH) return;
-
-  // Strip filename -> exe directory.
+bool get_exe_dir(wchar_t* out, size_t out_count) {
+  const DWORD n = GetModuleFileNameW(nullptr, out, static_cast<DWORD>(out_count));
+  if (n == 0 || n >= out_count) return false;
   for (DWORD i = n; i > 0; --i) {
-    if (path[i - 1] == L'\\' || path[i - 1] == L'/') {
-      path[i - 1] = L'\0';
-      break;
+    if (out[i - 1] == L'\\' || out[i - 1] == L'/') {
+      out[i - 1] = L'\0';
+      return true;
     }
   }
+  return false;
+}
 
-  SetCurrentDirectoryW(path);
-  // Help Windows resolve CrAdapter dependency DLLs (libusb, etc.).
-  SetDllDirectoryW(path);
+// Force-load the Cr_Core.dll that sits beside this exe (and its CrAdapter deps).
+// Without this, Windows may bind a different Cr_Core.dll from Imaging Edge / PATH
+// before main() runs, and EnumCameraObjects returns an empty/null list.
+bool preload_local_cr_core() {
+  wchar_t dir[MAX_PATH];
+  if (!get_exe_dir(dir, MAX_PATH)) {
+    std::cerr << "[sony-bridge] could not resolve exe directory\n";
+    return false;
+  }
+
+  SetCurrentDirectoryW(dir);
+  SetDllDirectoryW(dir);
+
+  wchar_t core_path[MAX_PATH];
+  if (swprintf_s(core_path, L"%s\\Cr_Core.dll", dir) < 0) return false;
+
+  HMODULE mod = LoadLibraryExW(core_path, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
+  if (!mod) {
+    std::cerr << "[sony-bridge] LoadLibraryEx failed for " << clickit::from_cr_chars(core_path)
+              << " GetLastError=" << GetLastError() << "\n";
+    return false;
+  }
+  std::cerr << "[sony-bridge] preloaded " << clickit::from_cr_chars(core_path) << "\n";
+  return true;
 }
 
 void log_runtime_files() {
@@ -75,7 +94,10 @@ void log_runtime_files() {
 
 int main() {
 #if defined(_WIN32)
-  ensure_runtime_paths();
+  if (!preload_local_cr_core()) {
+    std::cerr << "[sony-bridge] refusing to start without local Cr_Core.dll\n";
+    return 1;
+  }
   log_runtime_files();
 #endif
 
