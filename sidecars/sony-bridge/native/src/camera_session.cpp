@@ -134,7 +134,119 @@ bool CameraSession::pick_camera_(SCRSDK::ICrEnumCameraObjectInfo* list,
   return *out != nullptr;
 }
 
-bool CameraSession::enable_live_view_(std::string* error) {
+std::string CameraSession::still_dest_label_(CrInt64u value) {
+  if (value == SCRSDK::CrStillImageStoreDestination_HostPC) return "Destination Only (PC)";
+  if (value == SCRSDK::CrStillImageStoreDestination_MemoryCard) return "Camera Only";
+  if (value == SCRSDK::CrStillImageStoreDestination_HostPCAndMemoryCard) {
+    return "Dest.+Camera (PC+card)";
+  }
+  return "unknown(" + std::to_string(static_cast<unsigned long long>(value)) + ")";
+}
+
+bool CameraSession::apply_save_info_(std::string* error) {
+  auto dir = save_dir_();
+#if defined(_WIN32)
+  if (!dir.empty() && dir.back() != '\\' && dir.back() != '/') dir.push_back('\\');
+#else
+  if (!dir.empty() && dir.back() != '/') dir.push_back('/');
+#endif
+  auto cr_dir = to_cr_string<CrChar>(dir);
+  auto cr_prefix = to_cr_string<CrChar>("CLK");
+  const auto err = SCRSDK::SetSaveInfo(handle_, cr_dir.data(), cr_prefix.data(), 1);
+  if (!cr_ok(err)) {
+    char buf[192];
+    std::snprintf(buf, sizeof(buf), "SetSaveInfo failed (0x%X) for %s",
+                  static_cast<unsigned>(err), dir.c_str());
+    std::cerr << "[sony-bridge] " << buf << "\n";
+    if (error) *error = buf;
+    return false;
+  }
+  std::cerr << "[sony-bridge] SetSaveInfo ok dir=" << dir << " prefix=CLK\n";
+  return true;
+}
+
+bool CameraSession::ensure_pc_still_destination_(std::string* /*error*/) {
+  SCRSDK::CrDeviceProperty* props = nullptr;
+  CrInt32 nprops = 0;
+  auto err = SCRSDK::GetDeviceProperties(handle_, &props, &nprops);
+  if (!cr_ok(err) || !props) {
+    std::cerr << "[sony-bridge] GetDeviceProperties failed while setting still save dest\n";
+    return false;
+  }
+
+  bool found = false;
+  bool wrote = false;
+  for (CrInt32 i = 0; i < nprops; ++i) {
+    auto& prop = props[i];
+    if (prop.GetCode() != SCRSDK::CrDeviceProperty_StillImageStoreDestination) continue;
+    found = true;
+    const auto before = prop.GetCurrentValue();
+    still_save_dest_ = static_cast<int>(before);
+    std::cerr << "[sony-bridge] StillImageStoreDestination before="
+              << still_dest_label_(before) << " setEnable="
+              << (prop.IsSetEnableCurrentValue() ? "yes" : "no") << "\n";
+
+    // Camera Only never calls OnCompleteDownload — force a PC destination.
+    const CrInt64u targets[] = {
+        SCRSDK::CrStillImageStoreDestination_HostPCAndMemoryCard,
+        SCRSDK::CrStillImageStoreDestination_HostPC,
+    };
+    for (const auto target : targets) {
+      if (before == target) {
+        wrote = true;
+        break;
+      }
+      SCRSDK::CrDeviceProperty set = prop;
+      set.SetCurrentValue(target);
+      err = SCRSDK::SetDeviceProperty(handle_, &set);
+      std::cerr << "[sony-bridge] Set StillImageStoreDestination -> " << still_dest_label_(target)
+                << " result=0x" << std::hex << err << std::dec << "\n";
+      if (cr_ok(err)) {
+        still_save_dest_ = static_cast<int>(target);
+        wrote = true;
+        break;
+      }
+    }
+    break;
+  }
+
+  SCRSDK::ReleaseDeviceProperties(handle_, props);
+
+  if (!found) {
+    std::cerr << "[sony-bridge] StillImageStoreDestination property not reported by camera\n";
+  }
+
+  // Re-read to confirm what the body actually kept.
+  props = nullptr;
+  nprops = 0;
+  err = SCRSDK::GetDeviceProperties(handle_, &props, &nprops);
+  if (cr_ok(err) && props) {
+    for (CrInt32 i = 0; i < nprops; ++i) {
+      const auto& prop = props[i];
+      if (prop.GetCode() != SCRSDK::CrDeviceProperty_StillImageStoreDestination) continue;
+      still_save_dest_ = static_cast<int>(prop.GetCurrentValue());
+      std::cerr << "[sony-bridge] StillImageStoreDestination after="
+                << still_dest_label_(prop.GetCurrentValue()) << "\n";
+      break;
+    }
+    SCRSDK::ReleaseDeviceProperties(handle_, props);
+  }
+
+  if (still_save_dest_ == static_cast<int>(SCRSDK::CrStillImageStoreDestination_MemoryCard)) {
+    std::cerr << "[sony-bridge] WARNING: stills are Camera Only — PC download will time out.\n"
+              << "[sony-bridge] On the a7R V set: MENU → Network → Cnct./Remote Sht. → "
+                 "Remote Shoot Setting → Still Img. Save Dest. → Dest.+Camera (or Destination Only)\n";
+    return false;
+  }
+  return wrote || still_save_dest_ == static_cast<int>(SCRSDK::CrStillImageStoreDestination_HostPC) ||
+         still_save_dest_ ==
+             static_cast<int>(SCRSDK::CrStillImageStoreDestination_HostPCAndMemoryCard);
+}
+
+bool CameraSession::configure_remote_shoot_(std::string* error) {
+  apply_save_info_(error);
+  ensure_pc_still_destination_(error);
+
   SCRSDK::CrDeviceProperty* props = nullptr;
   CrInt32 nprops = 0;
   auto err = SCRSDK::GetDeviceProperties(handle_, &props, &nprops);
@@ -145,18 +257,7 @@ bool CameraSession::enable_live_view_(std::string* error) {
 
   for (CrInt32 i = 0; i < nprops; ++i) {
     auto& prop = props[i];
-    const auto code = prop.GetCode();
-
-    // Prefer saving stills to the host so OnCompleteDownload fires for /capture.
-    if (code == SCRSDK::CrDeviceProperty_StillImageStoreDestination &&
-        prop.IsSetEnableCurrentValue()) {
-      SCRSDK::CrDeviceProperty set = prop;
-      set.SetCurrentValue(SCRSDK::CrStillImageStoreDestination_HostPCAndMemoryCard);
-      SCRSDK::SetDeviceProperty(handle_, &set);
-      continue;
-    }
-
-    if (code != SCRSDK::CrDeviceProperty_LiveViewStatus) continue;
+    if (prop.GetCode() != SCRSDK::CrDeviceProperty_LiveViewStatus) continue;
     if (!prop.IsSetEnableCurrentValue()) continue;
 
     SCRSDK::CrDeviceProperty set = prop;
@@ -189,6 +290,10 @@ bool CameraSession::refresh_props_locked_() {
       case SCRSDK::CrDeviceProperty_BatteryRemain: {
         const int pct = battery_percent_from_remain(prop.GetCurrentValue());
         if (pct >= 0) battery_percent_ = pct;
+        break;
+      }
+      case SCRSDK::CrDeviceProperty_StillImageStoreDestination: {
+        still_save_dest_ = static_cast<int>(prop.GetCurrentValue());
         break;
       }
       default:
@@ -227,6 +332,11 @@ CameraStatus CameraSession::status() {
   st.model = model_;
   st.battery_percent = battery_percent_;
   st.message = message_;
+  st.still_save_dest = still_save_dest_;
+  st.still_save_dest_label =
+      still_save_dest_ < 0 ? "unknown"
+                           : still_dest_label_(static_cast<CrInt64u>(still_save_dest_));
+  st.save_dir = save_dir_();
   return st;
 }
 
@@ -304,20 +414,15 @@ bool CameraSession::connect(std::string* error) {
     return false;
   }
 
-  const auto dir = save_dir_();
-  auto cr_dir = to_cr_string<CrChar>(dir);
-  auto cr_prefix = to_cr_string<CrChar>("CLK");
-  err = SCRSDK::SetSaveInfo(handle_, cr_dir.data(), cr_prefix.data(), 1);
-  if (!cr_ok(err)) {
-    std::cerr << "[sony-bridge] SetSaveInfo failed; captures may not download to disk\n";
-  }
-
-  enable_live_view_(error);
+  configure_remote_shoot_(error);
   connected_ = true;
   capturing_ = false;
   message_ = "Ready";
   refresh_props_locked_();
-  std::cerr << "[sony-bridge] tethered to " << model_ << "\n";
+  std::cerr << "[sony-bridge] tethered to " << model_ << " stillSaveDest="
+            << (still_save_dest_ < 0 ? "unknown"
+                                     : still_dest_label_(static_cast<CrInt64u>(still_save_dest_)))
+            << "\n";
   return true;
 }
 
@@ -397,6 +502,19 @@ bool CameraSession::capture_jpeg(std::vector<std::uint8_t>* out, std::string* er
     return false;
   }
 
+  // Re-assert PC save path + destination before each shutter.
+  apply_save_info_(nullptr);
+  ensure_pc_still_destination_(nullptr);
+  if (still_save_dest_ == static_cast<int>(SCRSDK::CrStillImageStoreDestination_MemoryCard)) {
+    if (error) {
+      *error =
+          "Still Img. Save Dest. is Camera Only. On the a7R V: MENU → Network → "
+          "Cnct./Remote Sht. → Remote Shoot Setting → Still Img. Save Dest. → Dest.+Camera "
+          "(or Destination Only), then reconnect.";
+    }
+    return false;
+  }
+
   capturing_ = true;
   message_ = "Capturing";
   callback_.begin_download_wait();
@@ -440,8 +558,9 @@ bool CameraSession::capture_jpeg(std::vector<std::uint8_t>* out, std::string* er
     message_ = "Ready";
     if (error) {
       *error =
-          "Capture timed out waiting for download. Check Still Save Destination includes PC "
-          "Remote.";
+          "Capture timed out waiting for download. On the a7R V set MENU → Network → "
+          "Cnct./Remote Sht. → Remote Shoot Setting → Still Img. Save Dest. → Dest.+Camera "
+          "(not Camera Only), then POST /connect again. Also use JPEG (not RAW-only).";
     }
     return false;
   }

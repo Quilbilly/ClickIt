@@ -59,8 +59,10 @@ $env:CAMERA_PROVIDER="sony"; npm run dev
 1. MENU → Setup → USB → USB Connection Mode → **Remote Shooting**  
    (or Sel. When Connect, then pick Remote Shooting when plugging in)
 2. MENU → Network → Cnct./Remote Sht. → Remote Shoot Function → **On**
-3. Access Authentication = **Off** for first bring-up
-4. Connect USB-C and choose **Remote Shooting** if prompted
+3. MENU → Network → Cnct./Remote Sht. → Remote Shoot Setting → **Still Img. Save Dest.** →
+   **Dest.+Camera** or **Destination Only** (not Camera Only)
+4. Access Authentication = **Off** for first bring-up
+5. Connect USB-C and choose **Remote Shooting** if prompted
 
 ### Windows USB driver (required)
 

@@ -58,12 +58,17 @@ You want this file to exist:
 sidecars\sony-bridge\native\dist\clickit-sony-bridge.exe
 ```
 
-## 4) Camera body settings
+## 4) Camera body settings (ILCE-7RM5 / a7R V)
 
-1. Menu → USB Connection Mode → **PC Remote**
-2. PC Remote → Still Img. Save Dest. → **PC+Camera** (or PC only)
-3. Plug in USB-C, power on
-4. Quit Imaging Edge / other tether apps that might claim the camera
+1. MENU → Setup → USB → USB Connection Mode → **Remote Shooting**
+2. MENU → Network → Cnct./Remote Sht. → Remote Shoot Function → **On**
+3. MENU → Network → Cnct./Remote Sht. → **Remote Shoot Setting** → **Still Img. Save Dest.** →
+   **Dest.+Camera** or **Destination Only**  
+   (**Camera Only will shutter but never send the file to the PC** — booth capture times out)
+4. Same Remote Shoot Setting page: **Save Image Size** → **2M** is fine for booth speed
+5. Image Quality → File Format → **JPEG** (or RAW & JPEG with RAW+J Save Image = JPEG Only)
+6. Plug in USB-C, power on, choose **Remote Shooting** if prompted
+7. Quit Imaging Edge / other tether apps that might claim the camera
 
 ## 5) Run ClickIt + camera
 
@@ -104,3 +109,13 @@ npm run dev:sony
 | `EnumCameraObjects failed` / no cameras | PC Remote mode, cable, close Imaging Edge; `CrAdapter` must sit next to the `.exe` |
 | Connect fails | Confirm ILCE-7RM5 USB mode is PC Remote, not Mass Storage |
 | Booth says sidecar unreachable | Terminal A must stay running on port 8791 |
+| `timed out waiting for download` | Still Img. Save Dest. is Camera Only — set Dest.+Camera / Destination Only, then reconnect |
+| Shutter clicks, no review photos | Same as above; check Window A for `StillImageStoreDestination` log lines |
+
+Check destination after connect:
+
+```powershell
+curl.exe -s http://127.0.0.1:8791/status
+```
+
+You want `stillSaveDestLabel` like `Dest.+Camera (PC+card)` or `Destination Only (PC)`, not `Camera Only`.

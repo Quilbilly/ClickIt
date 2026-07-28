@@ -84,6 +84,9 @@ std::string HttpServer::handle_request_(const std::string& method, const std::st
       json << "\"batteryPercent\":null,";
     }
     json << "\"message\":\"" << json_escape(st.message) << "\","
+         << "\"stillSaveDest\":" << st.still_save_dest << ","
+         << "\"stillSaveDestLabel\":\"" << json_escape(st.still_save_dest_label) << "\","
+         << "\"saveDir\":\"" << json_escape(st.save_dir) << "\","
          << "\"bridge\":\"sony-crsdk-windows\""
          << "}";
     return json_response(200, "OK", json.str());

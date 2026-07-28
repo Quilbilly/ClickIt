@@ -16,6 +16,10 @@ struct CameraStatus {
   std::string model = "ILCE-7RM5";
   std::optional<int> battery_percent;
   std::string message = "Disconnected";
+  // CrStillImageStoreDestination current value, or -1 if unknown.
+  int still_save_dest = -1;
+  std::string still_save_dest_label = "unknown";
+  std::string save_dir;
 };
 
 class CameraSession {
@@ -37,9 +41,12 @@ class CameraSession {
   bool ensure_sdk_(std::string* error);
   bool pick_camera_(SCRSDK::ICrEnumCameraObjectInfo* list, const SCRSDK::ICrCameraObjectInfo** out,
                     std::string* error);
-  bool enable_live_view_(std::string* error);
+  bool configure_remote_shoot_(std::string* error);
+  bool apply_save_info_(std::string* error);
+  bool ensure_pc_still_destination_(std::string* error);
   bool refresh_props_locked_();
   std::string save_dir_() const;
+  static std::string still_dest_label_(CrInt64u value);
 
   std::mutex mu_;
   bool sdk_ready_ = false;
@@ -50,6 +57,7 @@ class CameraSession {
   std::string model_ = "ILCE-7RM5";
   std::optional<int> battery_percent_;
   std::string message_ = "Disconnected";
+  int still_save_dest_ = -1;
 };
 
 }  // namespace clickit
