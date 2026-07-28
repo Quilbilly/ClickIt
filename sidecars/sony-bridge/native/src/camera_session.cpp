@@ -7,7 +7,15 @@
 #include <cstring>
 #include <filesystem>
 #include <iostream>
+#include <sstream>
 #include <thread>
+
+#if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
 
 namespace fs = std::filesystem;
 
@@ -214,11 +222,13 @@ bool CameraSession::connect(std::string* error) {
   SCRSDK::ICrEnumCameraObjectInfo* list = nullptr;
   auto err = SCRSDK::EnumCameraObjects(&list, 3);
   if (!cr_ok(err) || !list) {
-    std::ostringstream oss;
-    oss << "EnumCameraObjects failed (0x" << std::hex << static_cast<unsigned>(err) << std::dec
-        << "). Check CrAdapter beside the exe, USB cable, and PC Remote mode.";
-    std::cerr << "[sony-bridge] " << oss.str() << "\n";
-    if (error) *error = oss.str();
+    char buf[192];
+    std::snprintf(
+        buf, sizeof(buf),
+        "EnumCameraObjects failed (0x%X). Check CrAdapter beside the exe, USB cable, and PC Remote mode.",
+        static_cast<unsigned>(err));
+    std::cerr << "[sony-bridge] " << buf << "\n";
+    if (error) *error = buf;
     return false;
   }
 
