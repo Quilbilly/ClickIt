@@ -56,6 +56,8 @@ export function createSonyCamera() {
           model: status.model || "ILCE-7RM5",
           batteryPercent: status.batteryPercent ?? null,
           message: status.message || (status.connected ? "Ready" : "Not connected"),
+          stillSaveDest: status.stillSaveDest ?? null,
+          stillSaveDestLabel: status.stillSaveDestLabel || null,
           sidecar: base,
         };
       } catch (err) {
