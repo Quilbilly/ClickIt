@@ -52,6 +52,25 @@ CameraSession::~CameraSession() {
 
 bool CameraSession::ensure_sdk_(std::string* error) {
   if (sdk_ready_) return true;
+
+#if defined(_WIN32)
+  // Surface adapter load problems before Init() swallows them.
+  {
+    HMODULE ptp = LoadLibraryW(L"CrAdapter\\Cr_PTP_USB.dll");
+    if (!ptp) {
+      char buf[160];
+      std::snprintf(buf, sizeof(buf),
+                    "Failed to load CrAdapter\\Cr_PTP_USB.dll (GetLastError=%lu). "
+                    "Run npm run sony-bridge:verify-dist",
+                    static_cast<unsigned long>(GetLastError()));
+      std::cerr << "[sony-bridge] " << buf << "\n";
+      if (error) *error = buf;
+      return false;
+    }
+    std::cerr << "[sony-bridge] loaded CrAdapter\\Cr_PTP_USB.dll\n";
+  }
+#endif
+
   if (!SCRSDK::Init()) {
     if (error) *error = "SCRSDK::Init failed (check Cr_Core.dll / CrAdapter next to the exe)";
     return false;
