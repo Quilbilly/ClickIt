@@ -41,6 +41,8 @@ Protocol docs: [sidecars/sony-bridge/PROTOCOL.md](./sidecars/sony-bridge/PROTOCO
 Native build: [sidecars/sony-bridge/native/README.md](./sidecars/sony-bridge/native/README.md)
 
 ### 3) S3/R2 + real SMTP
+Cloudflare R2 step-by-step: **[CLOUDFLARE.md](./CLOUDFLARE.md)** (`npm run storage:doctor` to verify).
+
 Set in `.env`:
 ```bash
 STORAGE_PROVIDER=s3

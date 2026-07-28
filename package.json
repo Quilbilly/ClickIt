@@ -15,6 +15,7 @@
     "sony-bridge:stage-runtime": "node sidecars/sony-bridge/native/scripts/stage-runtime.js",
     "sony-bridge:verify-dist": "node sidecars/sony-bridge/native/scripts/verify-dist.js",
     "sony-bridge:doctor": "node sidecars/sony-bridge/native/scripts/doctor.js",
+    "storage:doctor": "node server/scripts/storage-doctor.js",
     "dev:sony": "concurrently -k \"npm:sony-bridge\" \"npm:dev\"",
     "electron": "electron .",
     "electron:dev": "concurrently -k \"npm:dev\" \"wait-on http://127.0.0.1:8787/api/health && electron .\"",

@@ -39,9 +39,11 @@ export function storageStatus() {
   return {
     provider: config.storageProvider,
     bucket: config.storageProvider === "s3" ? config.s3.bucket || null : null,
+    endpoint: config.storageProvider === "s3" ? config.s3.endpoint || null : null,
+    publicBaseUrl: config.storageProvider === "s3" ? config.s3.publicBaseUrl || null : null,
     configured:
       config.storageProvider !== "s3" ||
-      Boolean(config.s3.bucket && config.s3.accessKeyId && config.s3.secretAccessKey),
+      Boolean(config.s3.bucket && config.s3.accessKeyId && config.s3.secretAccessKey && config.s3.endpoint),
   };
 }
 
