@@ -15,6 +15,11 @@ data/settings.json
 # Sony Camera Remote SDK (licensed binaries — keep local only)
 vendor/sony-camera-remote-sdk/**
 !vendor/sony-camera-remote-sdk/README.md
+
+# Native CrSDK bridge build outputs (includes copied Sony DLLs)
+sidecars/sony-bridge/native/build/
+sidecars/sony-bridge/native/dist/
+
 *.zip
 *.7z
 *.dmg

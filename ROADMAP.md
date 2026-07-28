@@ -12,11 +12,11 @@
 - [x] Offline upload/email retry queue
 - [x] Electron fullscreen kiosk shell
 - [x] Sony sidecar protocol + dev bridge
+- [x] Windows x64 Sony Camera Remote SDK tether bridge (ILCE-7RM5)
 - [x] Admin settings / sessions / resend / queue controls
 
 ## Next
 
-- [ ] Real Sony Camera Remote SDK binary implementing the sidecar protocol
 - [ ] Signed cloud download URLs on the guest page when local files are pruned
 - [ ] Touch on-screen keyboard
 - [ ] Windows/macOS installer + code signing

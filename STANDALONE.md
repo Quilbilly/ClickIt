@@ -7,9 +7,16 @@ This repository is the standalone ClickIt project. It was extracted from the nes
 Put Camera Remote SDK binaries under:
 
 ```
-vendor/sony-camera-remote-sdk/windows/
+vendor/sony-camera-remote-sdk/windows/   ← required for real ILCE-7RM5 tether
 vendor/sony-camera-remote-sdk/macos/
 vendor/sony-camera-remote-sdk/linux/
 ```
 
 See `vendor/sony-camera-remote-sdk/README.md`. Binaries are gitignored.
+
+On Windows, build the native bridge after extracting the SDK:
+
+```powershell
+npm run sony-bridge:build
+npm run sony-bridge
+```

@@ -36,10 +36,19 @@ const els = {
 };
 
 async function api(path, options = {}) {
-  const res = await fetch(`/api${path}`, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options,
-  });
+  let res;
+  try {
+    res = await fetch(`/api${path}`, {
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      ...options,
+    });
+  } catch {
+    const err = new Error(
+      "Lost connection to the booth server during the request. If Window B restarted, try again."
+    );
+    err.code = "NETWORK_ERROR";
+    throw err;
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const err = new Error(data.error || `Request failed (${res.status})`);
@@ -144,39 +153,33 @@ async function startSession() {
     const created = await api("/booth/sessions", { method: "POST", body: "{}" });
     state.sessionId = created.id;
 
-    await runCountdown(state.config.countdownSeconds);
+    const total = state.config.photoCount;
+    const countdownSeconds = state.config.countdownSeconds;
+    let session = null;
 
-    els.captureStatus.textContent = "Capturing…";
-    els.captureProgress.textContent = `Photo set of ${state.config.photoCount}`;
+    for (let i = 1; i <= total; i += 1) {
+      els.captureProgress.textContent = `Photo ${i} of ${total}`;
+      els.captureStatus.textContent = "Get ready";
+      startLivePreview();
+      await runCountdown(countdownSeconds);
 
-    const progress = tickCaptureProgress(state.config.photoCount, state.config.intervalMs);
+      // Free USB for shutter + download on this shot.
+      stopLivePreview();
+      els.captureStatus.textContent = "Capturing…";
 
-    const session = await api(`/booth/sessions/${state.sessionId}/capture`, {
-      method: "POST",
-      body: JSON.stringify({}),
-    });
+      session = await api(`/booth/sessions/${state.sessionId}/capture`, {
+        method: "POST",
+        body: JSON.stringify({ oneShot: true }),
+      });
+    }
 
-    progress.stop();
-    renderReview(session.photos || []);
+    renderReview(session?.photos || []);
     showScreen("review");
   } catch (err) {
     showError(err.message);
+  } finally {
+    stopLivePreview();
   }
-}
-
-function tickCaptureProgress(total, intervalMs) {
-  let i = 1;
-  els.captureProgress.textContent = `Photo 1 of ${total}`;
-  const timer = setInterval(() => {
-    i = Math.min(total, i + 1);
-    els.captureProgress.textContent = `Photo ${i} of ${total}`;
-    els.captureStatus.textContent = "Hold still";
-  }, Math.max(intervalMs, 400));
-  return {
-    stop() {
-      clearInterval(timer);
-    },
-  };
 }
 
 function renderReview(photos) {
