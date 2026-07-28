@@ -146,6 +146,8 @@ async function startSession() {
 
     await runCountdown(state.config.countdownSeconds);
 
+    // Stop live view polling so USB is free for shutter + download.
+    stopLivePreview();
     els.captureStatus.textContent = "Capturing…";
     els.captureProgress.textContent = `Photo set of ${state.config.photoCount}`;
 

@@ -137,11 +137,12 @@ std::string HttpServer::handle_request_(const std::string& method, const std::st
                           json.str());
     }
     std::ostringstream json;
-    json << "{\"jpegBase64\":\"" << base64_encode(jpeg) << "\"";
+    // Prefer path for large ILCE-7RM5 stills — base64 JSON is too heavy for booth capture.
     if (!saved.empty()) {
-      json << ",\"path\":\"" << json_escape(saved) << "\"";
+      json << "{\"path\":\"" << json_escape(saved) << "\"}";
+    } else {
+      json << "{\"jpegBase64\":\"" << base64_encode(jpeg) << "\"}";
     }
-    json << "}";
     return json_response(200, "OK", json.str());
   }
 
