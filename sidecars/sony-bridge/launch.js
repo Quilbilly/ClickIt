@@ -47,7 +47,7 @@ if (useNative) {
   }
   console.log(`[sony-bridge] starting native CrSDK bridge: ${nativeExe}`);
   console.log(`[sony-bridge] protocol http://127.0.0.1:${port}`);
-  run(nativeExe, [], { windowsHide: true, cwd: distDir });
+  run(nativeExe, [], { windowsHide: false, cwd: distDir });
 } else {
   if (process.platform === "win32" && !forceDev) {
     console.warn(
