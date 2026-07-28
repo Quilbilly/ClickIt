@@ -13,6 +13,7 @@
     "sony-bridge:dev": "node sidecars/sony-bridge/server.js",
     "sony-bridge:build": "node sidecars/sony-bridge/native/scripts/build-npm.js",
     "sony-bridge:stage-runtime": "node sidecars/sony-bridge/native/scripts/stage-runtime.js",
+    "sony-bridge:verify-dist": "node sidecars/sony-bridge/native/scripts/verify-dist.js",
     "sony-bridge:doctor": "node sidecars/sony-bridge/native/scripts/doctor.js",
     "dev:sony": "concurrently -k \"npm:sony-bridge\" \"npm:dev\"",
     "electron": "electron .",

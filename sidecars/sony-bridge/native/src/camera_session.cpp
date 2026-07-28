@@ -220,8 +220,9 @@ bool CameraSession::connect(std::string* error) {
   if (!ensure_sdk_(error)) return false;
 
   SCRSDK::ICrEnumCameraObjectInfo* list = nullptr;
-  auto err = SCRSDK::EnumCameraObjects(&list, 3);
-  if (!cr_ok(err) || !list) {
+  // Give USB enumeration a bit longer — some bodies need more than 3s after plug-in.
+  auto err = SCRSDK::EnumCameraObjects(&list, 10);
+  if (!cr_ok(err)) {
     char buf[192];
     std::snprintf(
         buf, sizeof(buf),
@@ -229,6 +230,26 @@ bool CameraSession::connect(std::string* error) {
         static_cast<unsigned>(err));
     std::cerr << "[sony-bridge] " << buf << "\n";
     if (error) *error = buf;
+    return false;
+  }
+  if (!list) {
+    const char* msg =
+        "No camera list returned. Confirm ILCE-7RM5 is powered on, USB-C data cable, and "
+        "USB Connection Mode = PC Remote (not Mass Storage). Close Imaging Edge.";
+    std::cerr << "[sony-bridge] " << msg << "\n";
+    if (error) *error = msg;
+    return false;
+  }
+
+  const auto count = list->GetCount();
+  std::cerr << "[sony-bridge] EnumCameraObjects ok, cameras=" << count << "\n";
+  if (count == 0) {
+    list->Release();
+    const char* msg =
+        "No Sony cameras found. Set USB Connection Mode to PC Remote, close Imaging Edge / "
+        "Remote Camera, replug USB, then retry connect.";
+    std::cerr << "[sony-bridge] " << msg << "\n";
+    if (error) *error = msg;
     return false;
   }
 
