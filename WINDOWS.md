@@ -118,4 +118,16 @@ Check destination after connect:
 curl.exe -s http://127.0.0.1:8791/status
 ```
 
-You want `stillSaveDestLabel` like `Dest.+Camera (PC+card)` or `Destination Only (PC)`, not `Camera Only`.
+You want:
+- `model` like `ILCE-7RM5` (not just `I`)
+- `stillSaveDestLabel` like `Dest.+Camera (PC+card)` or `Destination Only (PC)`, not `Camera Only`
+
+If `model` is `I` or status has no `stillSaveDestLabel`, your bridge exe is stale — rebuild:
+
+```powershell
+# stop Window A first
+npm run sony-bridge:build
+npm run sony-bridge
+curl.exe -s -X POST http://127.0.0.1:8791/connect
+curl.exe -s http://127.0.0.1:8791/status
+```

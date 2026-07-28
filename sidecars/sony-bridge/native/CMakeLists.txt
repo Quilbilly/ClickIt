@@ -35,6 +35,11 @@ target_compile_definitions(clickit-sony-bridge PRIVATE
   NOMINMAX
   WIN32_LEAN_AND_MEAN
   _CRT_SECURE_NO_WARNINGS
+  # Sony CrSDK Windows headers typedef CrChar to wchar_t when UNICODE is set.
+  # Without this, model names become "I" and SetSaveInfo paths are wrong, so
+  # still downloads never land on disk.
+  UNICODE
+  _UNICODE
 )
 
 if(MSVC)

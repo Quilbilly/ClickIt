@@ -76,7 +76,8 @@ bool CameraSession::ensure_sdk_(std::string* error) {
     return false;
   }
   sdk_ready_ = true;
-  std::cerr << "[sony-bridge] SDK version=" << SCRSDK::GetSDKVersion() << "\n";
+  std::cerr << "[sony-bridge] SDK version=" << SCRSDK::GetSDKVersion()
+            << " sizeof(CrChar)=" << sizeof(CrChar) << "\n";
 
 #if defined(_WIN32)
   wchar_t exe_path[MAX_PATH];

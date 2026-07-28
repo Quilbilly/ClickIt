@@ -91,6 +91,20 @@ inline std::wstring widen(std::string_view utf8) {
 // Sony CrChar is wchar_t in some SDK builds and char in others — support both.
 inline std::string narrow(const char* s) { return s ? std::string(s) : std::string{}; }
 
+#if defined(_WIN32)
+// Detect UTF-16LE ASCII-ish payloads mistakenly typed as char* (e.g. "I\0L\0C\0E\0").
+inline bool looks_like_utf16le(const char* s) {
+  if (!s) return false;
+  const auto* u = reinterpret_cast<const unsigned char*>(s);
+  if (u[0] == 0) return false;
+  // First code unit looks like ASCII wchar: lo-byte nonzero, hi-byte zero.
+  if (u[1] != 0) return false;
+  // Second code unit present and also ASCII wchar, or immediate terminator.
+  if (u[2] == 0 && u[3] == 0) return true;
+  return u[2] != 0 && u[3] == 0;
+}
+#endif
+
 template <typename CrCharT>
 inline std::string from_cr_chars(const CrCharT* s) {
   if (!s) return {};
@@ -104,6 +118,12 @@ inline std::string from_cr_chars(const CrCharT* s) {
     return out;
 #endif
   } else {
+#if defined(_WIN32)
+    const auto* as_chars = reinterpret_cast<const char*>(s);
+    if (looks_like_utf16le(as_chars)) {
+      return narrow(reinterpret_cast<const wchar_t*>(s));
+    }
+#endif
     return narrow(reinterpret_cast<const char*>(s));
   }
 }
@@ -119,6 +139,11 @@ inline std::basic_string<CrCharT> to_cr_string(std::string_view utf8) {
     out.assign(utf8.begin(), utf8.end());
 #endif
   } else {
+#if defined(_WIN32)
+    // If the active SDK build still typedefs CrChar as char but the DLL is the
+    // UNICODE Windows build, callers must compile with UNICODE so CrChar is
+    // wchar_t. Passing UTF-8 narrow paths into a wide SetSaveInfo breaks downloads.
+#endif
     out.assign(utf8.begin(), utf8.end());
   }
   return out;
