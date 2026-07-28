@@ -22,6 +22,7 @@ add_executable(clickit-sony-bridge
 target_include_directories(clickit-sony-bridge PRIVATE
   "${CMAKE_CURRENT_LIST_DIR}/src"
   "${SonyCrSDK_INCLUDE_DIR}"
+  "${SonyCrSDK_INCLUDE_DIR}/.."
 )
 
 target_link_libraries(clickit-sony-bridge PRIVATE

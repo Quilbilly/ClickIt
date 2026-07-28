@@ -215,10 +215,9 @@ bool CameraSession::connect(std::string* error) {
   callback_.reset_connection_state();
 
   SCRSDK::CrDeviceHandle handle = 0;
-  // Modern SDK signature used by ILCE-7RM5-capable builds (USB PC Remote).
+  // Prefer the 5-arg form (openMode + reconnect). Extra auth/fingerprint args default to null.
   err = SCRSDK::Connect(const_cast<SCRSDK::ICrCameraObjectInfo*>(camera), &callback_, &handle,
-                        SCRSDK::CrSdkControlMode_Remote, SCRSDK::CrReconnecting_ON, nullptr, nullptr,
-                        nullptr, 0);
+                        SCRSDK::CrSdkControlMode_Remote, SCRSDK::CrReconnecting_ON);
 
   // Keep enum alive until connect returns; SDK retains what it needs afterwards.
   list->Release();

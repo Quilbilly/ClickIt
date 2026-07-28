@@ -44,8 +44,8 @@ void DeviceCallback::OnDisconnected(CrInt32u error) {
 }
 
 void DeviceCallback::OnPropertyChanged() {}
-void DeviceCallback::OnLvPropertyChanged() {}
 void DeviceCallback::OnPropertyChangedCodes(CrInt32u, CrInt32u*) {}
+void DeviceCallback::OnLvPropertyChanged() {}
 void DeviceCallback::OnLvPropertyChangedCodes(CrInt32u, CrInt32u*) {}
 
 void DeviceCallback::OnCompleteDownload(CrChar* filename, CrInt32u /*type*/) {
@@ -62,6 +62,14 @@ void DeviceCallback::OnCompleteDownload(CrChar* filename, CrInt32u /*type*/) {
   std::cerr << "[sony-bridge] download complete: " << path << "\n";
 }
 
+void DeviceCallback::OnNotifyContentsTransfer(CrInt32u notify, SCRSDK::CrContentHandle /*handle*/,
+                                              CrChar* filename) {
+  // Some firmware paths deliver stills through contents-transfer notifications.
+  if (filename && (notify == 0 || notify == 1)) {
+    OnCompleteDownload(filename, 0);
+  }
+}
+
 void DeviceCallback::OnWarning(CrInt32u warning) {
   std::cerr << "[sony-bridge] warning=0x" << std::hex << warning << std::dec << "\n";
 }
@@ -75,28 +83,6 @@ void DeviceCallback::OnError(CrInt32u error) {
   cv_.notify_all();
   std::cerr << "[sony-bridge] error=0x" << std::hex << error << std::dec << "\n";
 }
-
-void DeviceCallback::OnNotifyContentsTransfer(CrInt32u notify, SCRSDK::CrContentHandle /*handle*/,
-                                              CrChar* filename) {
-  // Some firmware paths deliver stills through contents-transfer notifications.
-  if (filename && (notify == 0 || notify == 1)) {
-    OnCompleteDownload(filename, 0);
-  }
-}
-
-void DeviceCallback::OnWarningExt(CrInt32u warning, CrInt32, CrInt32, CrInt32) {
-  OnWarning(warning);
-}
-
-void DeviceCallback::OnNotifyFTPTransferResult(CrInt32u, CrInt32u, CrInt32u) {}
-void DeviceCallback::OnNotifyRemoteTransferResult(CrInt32u, CrInt32u, CrChar*) {}
-void DeviceCallback::OnNotifyRemoteTransferResult(CrInt32u, CrInt32u, CrInt8u*, CrInt64u) {}
-void DeviceCallback::OnNotifyRemoteTransferContentsListChanged(CrInt32u, CrInt32u, CrInt32u) {}
-void DeviceCallback::OnNotifyRemoteFirmwareUpdateResult(CrInt32u, const void*) {}
-void DeviceCallback::OnReceivePlaybackTimeCode(CrInt32u) {}
-void DeviceCallback::OnReceivePlaybackData(CrInt8u, CrInt32, CrInt8u*, CrInt64, CrInt64, CrInt32,
-                                           CrInt32) {}
-void DeviceCallback::OnNotifyMonitorUpdated(CrInt32u, CrInt32u) {}
 
 bool DeviceCallback::wait_connected(int timeout_ms) {
   std::unique_lock<std::mutex> lock(mu_);

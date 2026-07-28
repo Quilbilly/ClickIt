@@ -1,6 +1,16 @@
 #pragma once
 
+// CameraRemote_SDK.h only forward-declares IDeviceCallback; include the full definition.
 #include "CameraRemote_SDK.h"
+#if defined(__has_include)
+#  if __has_include("IDeviceCallback.h")
+#    include "IDeviceCallback.h"
+#  elif __has_include("CRSDK/IDeviceCallback.h")
+#    include "CRSDK/IDeviceCallback.h"
+#  endif
+#else
+#  include "IDeviceCallback.h"
+#endif
 
 #include <condition_variable>
 #include <mutex>
@@ -8,32 +18,21 @@
 
 namespace clickit {
 
-// Implements the modern IDeviceCallback surface used by recent CrSDK builds
-// that support ILCE-7RM5.
+// Callback surface aligned with CrSDK builds that support ILCE-7RM5
+// (same set used by common mid/modern sample wrappers).
 class DeviceCallback final : public SCRSDK::IDeviceCallback {
  public:
   void OnConnected(SCRSDK::DeviceConnectionVersioin version) override;
   void OnDisconnected(CrInt32u error) override;
   void OnPropertyChanged() override;
-  void OnLvPropertyChanged() override;
-  void OnCompleteDownload(CrChar* filename, CrInt32u type) override;
-  void OnWarning(CrInt32u warning) override;
-  void OnError(CrInt32u error) override;
   void OnPropertyChangedCodes(CrInt32u num, CrInt32u* codes) override;
+  void OnLvPropertyChanged() override;
   void OnLvPropertyChangedCodes(CrInt32u num, CrInt32u* codes) override;
+  void OnCompleteDownload(CrChar* filename, CrInt32u type) override;
   void OnNotifyContentsTransfer(CrInt32u notify, SCRSDK::CrContentHandle handle,
                                 CrChar* filename) override;
-  void OnWarningExt(CrInt32u warning, CrInt32 param1, CrInt32 param2, CrInt32 param3) override;
-  void OnNotifyFTPTransferResult(CrInt32u notify, CrInt32u numOfSuccess, CrInt32u numOfFail) override;
-  void OnNotifyRemoteTransferResult(CrInt32u notify, CrInt32u per, CrChar* filename) override;
-  void OnNotifyRemoteTransferResult(CrInt32u notify, CrInt32u per, CrInt8u* data, CrInt64u size) override;
-  void OnNotifyRemoteTransferContentsListChanged(CrInt32u notify, CrInt32u slotNumber,
-                                                 CrInt32u addSize) override;
-  void OnNotifyRemoteFirmwareUpdateResult(CrInt32u notify, const void* param) override;
-  void OnReceivePlaybackTimeCode(CrInt32u timeCode) override;
-  void OnReceivePlaybackData(CrInt8u mediaType, CrInt32 dataSize, CrInt8u* data, CrInt64 pts,
-                             CrInt64 dts, CrInt32 param1, CrInt32 param2) override;
-  void OnNotifyMonitorUpdated(CrInt32u type, CrInt32u frameNo) override;
+  void OnWarning(CrInt32u warning) override;
+  void OnError(CrInt32u error) override;
 
   bool wait_connected(int timeout_ms);
   bool wait_download(int timeout_ms, std::string* out_path);
