@@ -1,5 +1,6 @@
 #include "camera_session.hpp"
 #include "http_server.hpp"
+#include "util.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -40,6 +41,24 @@ void ensure_cwd_is_exe_dir() {
     }
   }
 }
+
+void log_runtime_files() {
+  wchar_t exe_path[MAX_PATH];
+  if (GetModuleFileNameW(nullptr, exe_path, MAX_PATH) > 0) {
+    std::cerr << "[sony-bridge] exe=" << clickit::from_cr_chars(exe_path) << "\n";
+  }
+  wchar_t cwd[MAX_PATH];
+  if (GetCurrentDirectoryW(MAX_PATH, cwd) > 0) {
+    std::cerr << "[sony-bridge] cwd=" << clickit::from_cr_chars(cwd) << "\n";
+  }
+  const DWORD core_attr = GetFileAttributesW(L"Cr_Core.dll");
+  const DWORD adapter_attr = GetFileAttributesW(L"CrAdapter");
+  const bool adapter_ok =
+      adapter_attr != INVALID_FILE_ATTRIBUTES && (adapter_attr & FILE_ATTRIBUTE_DIRECTORY);
+  std::cerr << "[sony-bridge] Cr_Core.dll beside cwd: "
+            << (core_attr != INVALID_FILE_ATTRIBUTES ? "yes" : "NO") << "\n";
+  std::cerr << "[sony-bridge] CrAdapter/ beside cwd: " << (adapter_ok ? "yes" : "NO") << "\n";
+}
 #endif
 
 }  // namespace
@@ -47,6 +66,7 @@ void ensure_cwd_is_exe_dir() {
 int main() {
 #if defined(_WIN32)
   ensure_cwd_is_exe_dir();
+  log_runtime_files();
 #endif
 
   const int port = env_int("SONY_BRIDGE_PORT", 8791);
