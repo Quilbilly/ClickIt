@@ -140,8 +140,11 @@ std::string HttpServer::handle_request_(const std::string& method, const std::st
     // Prefer path for large ILCE-7RM5 stills — base64 JSON is too heavy for booth capture.
     if (!saved.empty()) {
       json << "{\"path\":\"" << json_escape(saved) << "\"}";
-    } else {
+    } else if (!jpeg.empty()) {
       json << "{\"jpegBase64\":\"" << base64_encode(jpeg) << "\"}";
+    } else {
+      json << "{\"error\":\"Capture produced no path or image\",\"code\":\"CAPTURE_EMPTY\"}";
+      return json_response(500, "Error", json.str());
     }
     return json_response(200, "OK", json.str());
   }

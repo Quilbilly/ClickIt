@@ -1,0 +1,12 @@
+{
+  "watch": ["server", "booth", "public"],
+  "ext": "js,mjs,cjs,json,css,html",
+  "ignore": [
+    "data/**",
+    "vendor/**",
+    "sidecars/sony-bridge/native/dist/**",
+    "sidecars/sony-bridge/native/build/**",
+    "node_modules/**"
+  ],
+  "delay": 300
+}

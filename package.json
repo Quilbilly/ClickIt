@@ -7,7 +7,7 @@
   "main": "electron/main.cjs",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "nodemon server/index.js",
+    "dev": "nodemon --config nodemon.json server/index.js",
     "booth": "node server/index.js",
     "sony-bridge": "node sidecars/sony-bridge/launch.js",
     "sony-bridge:dev": "node sidecars/sony-bridge/server.js",

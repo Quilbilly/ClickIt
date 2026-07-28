@@ -431,7 +431,8 @@ bool CameraSession::capture_jpeg(std::vector<std::uint8_t>* out, std::string* er
 
   lock.unlock();
   std::string path;
-  const bool got = callback_.wait_download(20000, &path);
+  // ILCE-7RM5 full-res USB transfer can exceed 20s on busy hosts.
+  const bool got = callback_.wait_download(90000, &path);
   lock.lock();
 
   capturing_ = false;
@@ -445,15 +446,20 @@ bool CameraSession::capture_jpeg(std::vector<std::uint8_t>* out, std::string* er
     return false;
   }
 
-  auto bytes = read_file_bytes_as_string(path);
-  if (bytes.empty()) {
-    message_ = "Ready";
-    if (error) *error = "Downloaded capture file was empty: " + path;
-    return false;
+  if (saved_path) *saved_path = path;
+
+  // Prefer path-only handoff for large stills — skip loading 30–80MB into RAM when
+  // the caller can read the file from disk.
+  if (out && !saved_path) {
+    auto bytes = read_file_bytes_as_string(path);
+    if (bytes.empty()) {
+      message_ = "Ready";
+      if (error) *error = "Downloaded capture file was empty: " + path;
+      return false;
+    }
+    out->assign(bytes.begin(), bytes.end());
   }
 
-  out->assign(bytes.begin(), bytes.end());
-  if (saved_path) *saved_path = path;
   message_ = "Ready";
   refresh_props_locked_();
   return true;

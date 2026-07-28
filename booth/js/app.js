@@ -36,10 +36,19 @@ const els = {
 };
 
 async function api(path, options = {}) {
-  const res = await fetch(`/api${path}`, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options,
-  });
+  let res;
+  try {
+    res = await fetch(`/api${path}`, {
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      ...options,
+    });
+  } catch {
+    const err = new Error(
+      "Lost connection to the booth server during the request. If Window B restarted, try again."
+    );
+    err.code = "NETWORK_ERROR";
+    throw err;
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const err = new Error(data.error || `Request failed (${res.status})`);
