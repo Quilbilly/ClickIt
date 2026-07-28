@@ -50,6 +50,23 @@ bool CameraSession::ensure_sdk_(std::string* error) {
   }
   sdk_ready_ = true;
   std::cerr << "[sony-bridge] SDK version=" << SCRSDK::GetSDKVersion() << "\n";
+
+#if defined(_WIN32)
+  wchar_t exe_path[MAX_PATH];
+  if (GetModuleFileNameW(nullptr, exe_path, MAX_PATH) > 0) {
+    std::cerr << "[sony-bridge] exe=" << from_cr_chars(exe_path) << "\n";
+  }
+  wchar_t cwd[MAX_PATH];
+  if (GetCurrentDirectoryW(MAX_PATH, cwd) > 0) {
+    std::cerr << "[sony-bridge] cwd=" << from_cr_chars(cwd) << "\n";
+  }
+  const DWORD attr = GetFileAttributesW(L"CrAdapter");
+  const bool adapter_ok = attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY);
+  const DWORD core_attr = GetFileAttributesW(L"Cr_Core.dll");
+  std::cerr << "[sony-bridge] Cr_Core.dll beside cwd: "
+            << (core_attr != INVALID_FILE_ATTRIBUTES ? "yes" : "NO") << "\n";
+  std::cerr << "[sony-bridge] CrAdapter/ beside cwd: " << (adapter_ok ? "yes" : "NO") << "\n";
+#endif
   return true;
 }
 
@@ -197,7 +214,11 @@ bool CameraSession::connect(std::string* error) {
   SCRSDK::ICrEnumCameraObjectInfo* list = nullptr;
   auto err = SCRSDK::EnumCameraObjects(&list, 3);
   if (!cr_ok(err) || !list) {
-    if (error) *error = "EnumCameraObjects failed (is CrAdapter beside the executable?)";
+    std::ostringstream oss;
+    oss << "EnumCameraObjects failed (0x" << std::hex << static_cast<unsigned>(err) << std::dec
+        << "). Check CrAdapter beside the exe, USB cable, and PC Remote mode.";
+    std::cerr << "[sony-bridge] " << oss.str() << "\n";
+    if (error) *error = oss.str();
     return false;
   }
 
