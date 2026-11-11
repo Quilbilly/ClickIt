@@ -71,7 +71,9 @@ async function refreshAll() {
     ? `${camera.model} · ${camera.message}`
     : `Camera: ${camera.message}`;
   els.storageLine.textContent = stats.storage
-    ? `Storage: ${stats.storage.provider}${stats.storage.bucket ? ` · ${stats.storage.bucket}` : ""}`
+    ? `Storage: ${stats.storage.provider}${stats.storage.bucket ? ` · ${stats.storage.bucket}` : ""}${
+        stats.storage.configured === false ? " · not configured" : ""
+      }`
     : "Storage: local";
   els.queueLine.textContent = `Queue pending: ${stats.pendingJobs || 0}`;
 

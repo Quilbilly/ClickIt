@@ -61,58 +61,75 @@ router.get("/booth/sessions/:id", async (req, res) => {
 });
 
 /**
- * Runs the full capture sequence server-side using current settings.
- * Body may override countdown/photoCount/interval for this session.
+ * Capture photos for a session.
+ * - Default: capture the full set (legacy / admin).
+ * - oneShot: true — capture exactly one next photo (booth countdown-per-shot).
  */
 router.post("/booth/sessions/:id/capture", async (req, res) => {
   const session = await getSession(req.params.id);
   if (!session) return res.status(404).json({ error: "Session not found" });
 
   const settings = await getSettings();
-  const countdownSeconds = clamp(
-    Number(req.body?.countdownSeconds ?? settings.countdownSeconds),
-    0,
-    30
-  );
   const photoCount = clamp(Number(req.body?.photoCount ?? settings.photoCount), 1, 12);
   const intervalMs = clamp(Number(req.body?.intervalMs ?? settings.intervalMs), 250, 10000);
-
-  session.status = "capturing";
-  session.photos = [];
-  session.error = null;
-  await saveSession(session);
+  const oneShot = Boolean(req.body?.oneShot);
 
   const camera = getCamera();
   const dir = await ensureSessionUploadDir(session.id);
-  const photos = [];
 
   try {
-    // Countdown is primarily client-rendered; brief settle before first shutter.
-    if (countdownSeconds > 0) await sleep(Math.min(countdownSeconds, 1) * 200);
+    if (!oneShot) {
+      session.status = "capturing";
+      session.photos = [];
+      session.error = null;
+      await saveSession(session);
+    } else if (session.status === "ready" || session.status === "created" || !session.photos?.length) {
+      session.status = "capturing";
+      session.photos = session.photos || [];
+      session.error = null;
+      await saveSession(session);
+    }
 
-    for (let i = 1; i <= photoCount; i += 1) {
+    const photos = Array.isArray(session.photos) ? [...session.photos] : [];
+    const shotsThisRequest = oneShot ? 1 : photoCount;
+    const startIndex = oneShot ? photos.length + 1 : 1;
+
+    if (oneShot && photos.length >= photoCount) {
+      return res.status(400).json({ error: "Session already has a full photo set", code: "CAPTURE_COMPLETE" });
+    }
+
+    for (let n = 0; n < shotsThisRequest; n += 1) {
+      const index = startIndex + n;
       const buffer = await camera.capturePhoto({
         sessionId: session.id,
-        index: i,
+        index,
         total: photoCount,
       });
-      const filename = `photo-${String(i).padStart(2, "0")}.jpg`;
+      const filename = `photo-${String(index).padStart(2, "0")}.jpg`;
       const abs = path.join(dir, filename);
       await fs.writeFile(abs, buffer);
       photos.push({
         filename,
-        index: i,
+        index,
         bytes: buffer.length,
         url: `/api/booth/sessions/${session.id}/photos/${filename}`,
         capturedAt: new Date().toISOString(),
       });
-      if (i < photoCount) await sleep(intervalMs);
+      if (!oneShot && n < shotsThisRequest - 1) await sleep(intervalMs);
     }
 
     session.photos = photos;
-    session.status = "review";
-    await saveSession(session);
-    await afterCapture(session);
+    session.error = null;
+
+    if (photos.length >= photoCount) {
+      session.status = "review";
+      await saveSession(session);
+      await afterCapture(session);
+    } else {
+      session.status = "capturing";
+      await saveSession(session);
+    }
+
     return res.json(publicSession(await getSession(session.id)));
   } catch (err) {
     session.status = "error";

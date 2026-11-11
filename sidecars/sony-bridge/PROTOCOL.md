@@ -43,5 +43,6 @@ or
 
 ## Reference implementations
 
-- `server.js` in this folder: development bridge that mimics the protocol with generated frames
-- Replace it with a C++/C#/Python binary linked to Sony Camera Remote SDK for production ILCE-7RM5 tether
+- **Windows x64 (production):** `native/` — C++ binary linked to Sony Camera Remote SDK (`clickit-sony-bridge.exe`). Build with `npm run sony-bridge:build` after dropping the SDK into `vendor/sony-camera-remote-sdk/windows`. See [`native/README.md`](./native/README.md).
+- **Dev stub:** `server.js` — generated frames so the booth can be tested without a camera.
+- **Launcher:** `launch.js` (via `npm run sony-bridge`) prefers the native exe on Windows, otherwise starts the Node stub.

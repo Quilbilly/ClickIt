@@ -32,4 +32,5 @@ This starts the ClickIt API inside Electron and opens the booth UI fullscreen.
 
 ## Tips
 - Set `PUBLIC_BASE_URL` to a LAN/public URL guests can reach for QR downloads
-- For Sony: run `npm run sony-bridge` (dev) or your SDK binary, then `CAMERA_PROVIDER=sony`
+- For Sony on Windows: extract the SDK into `vendor/sony-camera-remote-sdk/windows`, run `npm run sony-bridge:build`, then `npm run sony-bridge` and `CAMERA_PROVIDER=sony`
+- For Sony without the native binary: `npm run sony-bridge:dev` (Node stub)

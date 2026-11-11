@@ -7,9 +7,9 @@ import { config } from "../../config.js";
 export function createSonyCamera() {
   const base = config.sonySidecarUrl;
 
-  async function rpc(pathname, { method = "GET", body } = {}) {
+  async function rpc(pathname, { method = "GET", body, timeoutMs = 15000 } = {}) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15000);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const res = await fetch(`${base}${pathname}`, {
         method,
@@ -32,7 +32,7 @@ export function createSonyCamera() {
       }
       if (err.code) throw err;
       const wrapped = new Error(
-        `Sony sidecar unreachable at ${base}. Start sidecars/sony-bridge or your SDK binary.`
+        `Sony sidecar unreachable at ${base}. Run npm run sony-bridge (native CrSDK on Windows, or Node stub).`
       );
       wrapped.code = "SONY_SIDECAR_UNREACHABLE";
       wrapped.cause = err;
@@ -56,6 +56,8 @@ export function createSonyCamera() {
           model: status.model || "ILCE-7RM5",
           batteryPercent: status.batteryPercent ?? null,
           message: status.message || (status.connected ? "Ready" : "Not connected"),
+          stillSaveDest: status.stillSaveDest ?? null,
+          stillSaveDestLabel: status.stillSaveDestLabel || null,
           sidecar: base,
         };
       } catch (err) {
@@ -98,17 +100,20 @@ export function createSonyCamera() {
     },
 
     async capturePhoto({ sessionId, index, total }) {
+      // 61MP downloads need a long timeout (shutter + PC transfer).
       const data = await rpc("/capture", {
         method: "POST",
         body: { sessionId, index, total },
+        timeoutMs: 120000,
       });
 
-      if (data.jpegBase64) {
-        return Buffer.from(data.jpegBase64, "base64");
-      }
+      // Prefer filesystem path — avoid huge base64 JSON for full-res stills.
       if (data.path) {
         const fs = await import("node:fs/promises");
         return fs.readFile(data.path);
+      }
+      if (data.jpegBase64) {
+        return Buffer.from(data.jpegBase64, "base64");
       }
 
       const err = new Error("Sony sidecar capture returned no image");
